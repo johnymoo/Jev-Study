@@ -3,3 +3,5 @@ _bmad-output/
 .claude/
 .sisyphus/
 planning/01-raw/
+site/.venv/
+site/server.log
