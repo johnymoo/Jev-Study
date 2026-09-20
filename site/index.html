@@ -50,6 +50,7 @@ hr { border:none; border-top:1px solid var(--border); margin:24px 0; }
 <a href="#07-jev-phishing-bench"> 07 · jev-phishing-bench</a>
 <a href="#08-windtunnel"> 08 · WindTunnel</a>
 <a href="#09-jev-browser"> 09 · jev-browser</a>
+<a href="#10-kev-nimble-training">★ 10 · Kev & Nimble 训练方法 ★</a>
 </nav>
 <main>
 <section id="00-overview"><h1>00 — Jev 复现生态调研总览</h1>
@@ -669,6 +670,104 @@ CUDA_VISIBLE_DEVICES=0 semif-score \
 </ul>
 <h2>评估结论</h2>
 <p>三个数字全部在仓库中可证实，且仓库提供了复现命令（<code>node bench/compare.mjs ...</code>）与程序化验证（服务端随机 8 位码防 LLM 裁判偏置），方法学可信。它给出文章结论最干净的工程佐证：<strong>判断模型 + 确定性验证 + 升级契约</strong>的组合可以在窄域任务上以 1/100 成本逼近 LLM agent，同时明确划出了判断模型的能力边界（回溯、纯阅读）。</p></section>
+<section id="10-kev-nimble-training"><h1>10 — Kev 与 Bespoke Nimble：训练方法与数据集（自研微调参考）</h1>
+<ul>
+<li>研究日期：2026-09-20</li>
+<li>信息源：微信公众号文章《JEV：一个只会说「选A、打3分、是」的AI模型爆了，48小时炸出14个项目》（存档 <code>01-raw/wx-jev-kev-nimble-202609.md</code>）+ 两仓库一手核验</li>
+<li>仓库：nimble <code>35fe1f4</code>（2026-09-19）、kev <code>20fa626</code>（2026-09-19）</li>
+<li><strong>定位：本报告侧重"我们以后做自己的微调决策模型时能直接抄什么"</strong></li>
+</ul>
+<h2>一、两条微调路线速览</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Bespoke Nimble</th>
+<th>Kev (Jared Palmer)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基座</td>
+<td>Qwen3.5-9B</td>
+<td>Qwen2.5/Qwen3 0.5B–8B（推荐 4B）</td>
+</tr>
+<tr>
+<td>方法</td>
+<td>LoRA（rank 16）+ 答案 token 交叉熵</td>
+<td>LoRA（r=16）+ 从零训练的 pointer readout head（0.46M）</td>
+</tr>
+<tr>
+<td>可训参数</td>
+<td>LoRA 适配器</td>
+<td>9.3M（占 backbone 1.9%）</td>
+</tr>
+<tr>
+<td>训练数据</td>
+<td>2,676 条对比对（10 领域）</td>
+<td>10–13 个公开源 ×1,000 条 + 2×448 条程序化策略对（decision-v4/v6 suite）</td>
+</tr>
+<tr>
+<td>关键超参</td>
+<td>lr 5e-5、effective batch 8、1 epoch、BF16、seed 17、2,048 token 限长</td>
+<td>lr <strong>5e-5</strong>（最大单项改进）、2 epochs、batch 4×accum 2、bf16 autocast</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>调参 L40S、终训 H100</td>
+<td>kev-4b 单 H100 ~40 分钟；0.5B 试验 $0.15–0.30；M5 笔记本 0.06 度电</td>
+</tr>
+<tr>
+<td>成绩</td>
+<td>324 held-out 90.12%（Jev 93.21%，基座 66.36%，Qwen3.8-27B 84.88%）</td>
+<td>OOD：kev-4b 0.79 / kev-8b 0.80（Jev 0.86）</td>
+</tr>
+<tr>
+<td>许可</td>
+<td>Apache 2.0（数据/权重/配方/推理全公开）</td>
+<td>开源 + HF 集合</td>
+</tr>
+</tbody>
+</table>
+<h2>二、Nimble：contrastive data curation（最值得抄的数据方法）</h2>
+<p><strong>核心思想</strong>：没有 teacher 概率可蒸馏，就构造<strong>最小对比对（minimal pairs）</strong>——两条样本几乎完全相同，只改一个关键事实使正确答案翻转，标签是硬的（对/错）。模型被迫学会"哪条证据才应该改变决策"，从而把 logits 校准到可用。</p>
+<ul>
+<li>文中例子：规则"只有 Mira 可授权账户 42 退款"；对比对只把签名人 Mira→Noah，答案 true→false，其余文本（问题、政策）逐字相同</li>
+<li><strong>无需人工标注概率、无需蒸馏</strong>；训练目标是 allowed candidate logits 上的交叉熵（直接学类型化决策）</li>
+<li>仓库明确："只拿 Jev 评估，不用 Jev 输出"；保存的 Jev 概率仅留作未来 soft-target 蒸馏的选项</li>
+<li>数据集：<code>data/train.jsonl</code> 2,826 条（发布模型用 2,676）/ <code>data/eval.jsonl</code> 324 条（仅终评）。覆盖 Commerce、Education、Media、Public Services、Supply Chain、Travel、Workplace 等 10 领域</li>
+<li>题型分布（训练/holdout）：Choice 1,244/260、Noul（布尔）500/0、Score 932/64</li>
+<li><strong>标签全部是合成且由模型自查、无人复核</strong>——同模型多次调用可能犯同样的错，作者自己承认此局限</li>
+</ul>
+<h2>三、Kev：架构隔离与"学习率保知识"</h2>
+<ul>
+<li><strong>单次 prefill 多问题</strong>：state 编码一次，多个 question 经 block-causal mask 并行独立推理（问题间互相不可见，隔离性验证到 4e-6 精度）；pointer head 对每个问题的 decide token × option token 打分后 softmax</li>
+<li><strong>训练/推理同一 renderer</strong>：线上请求与训练数据走同一格式管线，推理不会遇到训练没见过的格式</li>
+<li><strong>学习率是保住基座能力的关键</strong>：默认 2e-4 会把基座知识"训没"，降到 <strong>5e-5</strong> 保住大部分——这类微调不是学新知识，而是教模型"用"已有能力做决策（低漂移旋钮 lora_targets/head_lr/weight_decay 均不敌 lr 5e-5）</li>
+<li>数据来源：公开数据集转 TypeSafe 形状（Banking77、AG News、MNLI、BoolQ、SST-5、Yelp 等）+ 程序化 policy pairs，冻结为带校验和的 suite（<code>evals/</code>）</li>
+<li>可选数据增强：<code>--p_none_pair</code>（部分 Choice 记录附加 none-of-the-above 最小对）；<code>--option_isolation</code>（选项隔离子分支，置换不变但 4B 上损精度）</li>
+<li>严谨性：每个 trial 记录 git commit、suite hash、代码 hash，不一致拒绝运行；训练 TF32/bf16、评估 fp32-exact（TF32 本身就会移动概率 ~1e-3）</li>
+</ul>
+<h2>四、两文互相印证的结论</h2>
+<ol>
+<li><strong>无需蒸馏、无需秘密配方</strong>：LoRA + 答案 token 交叉熵 + 硬标签即可逼近 Jev（差 ~3pp）</li>
+<li><strong>lr 5e-5 是两个项目共同的甜点</strong>（Kev 的最大单项发现；Nimble 终选配方同为 5e-5）</li>
+<li>数据质量杠杆在<strong>对比结构</strong>（翻转关键事实）而非数据量——2,676 条就够把 9B 从 66% 拉到 90%</li>
+</ol>
+<h2>五、局限（做自研模型时要避的坑）</h2>
+<ul>
+<li>Nimble 测试仅 324 条/162 对/6 领域，作者自认"换测试可能远不如 Jev"；单一 held-out 高分易掩盖线上风险，应补<strong>校准曲线与分布外测试</strong>（评论区共识）</li>
+<li>Kev OOD 差 Jev 6–7pp，短板集中在知识题（MMLU 0.69–0.75 vs 0.90）和日期算术——<strong>基座缺的知识微调补不回来</strong></li>
+<li>合成标签自查有系统性盲区；Nimble holdout 的 Noul=0（布尔判断无 held-out 覆盖）</li>
+</ul>
+<h2>六、对我们的可执行参考（GB10 自研微调）</h2>
+<ol>
+<li><strong>数据</strong>：优先复刻 contrastive data curation——按业务写策略/规则文本，程序化生成最小对比对（改一个字段翻转标签），题型覆盖 Choice/Noul/Score 三类</li>
+<li><strong>配方起点</strong>：LoRA r=16、lr 5e-5、1–2 epochs、BF16、答案 token 交叉熵；单卡即可（kev-4b 一张 H100 40 分钟量级，GB10 上 4B 级基座可试）</li>
+<li><strong>基座</strong>：知识类任务别指望微调补；选带足够 MMLU 的基座（4B–9B 档），体积优先则 Kev 路线（readout head + block-causal 多问题）</li>
+<li><strong>评测</strong>：冻结 held-out suite + 校准曲线（ECE/可靠性图）+ OOD 集，别只看单一准确率</li>
+<li>参考实现：<code>repos/nimble/data/</code>（现成 2,826+324 条样例数据）、<code>repos/kev/kev/{contrastive,data,train}.py</code>（对比对生成与训练循环）</li>
+</ol></section>
 </main>
 </body>
 </html>

@@ -57,6 +57,7 @@ FILES = [
     ("07-jev-phishing-bench.md", "07 · jev-phishing-bench", ""),
     ("08-windtunnel.md", "08 · WindTunnel", ""),
     ("09-jev-browser.md", "09 · jev-browser", ""),
+    ("10-kev-nimble-training.md", "10 · Kev & Nimble 训练方法 ★", "★"),
 ]
 
 nav, sections = [], []
