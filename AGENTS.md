@@ -27,6 +27,7 @@ execution/                                ← 留给后续实现代码
 | jev-phishing-bench | anisselbd | 专用分类器 81.3% vs 零样本判断 62.6% |
 | WindTunnel | nekuda-ai | 感知/判断解耦，表征改造 25/49→49/49 |
 | jev-browser | MahmoudAdelbghany | 单任务 1.8s / $0.0005 / 97% |
+| fast-browser-use (APUS-AI-Lab) | APUS-AI-Lab | Jev System 1 的 100% 本地开源复现（Qwen3.5-9B MLX / 35B-A3B CUDA），单 token logits 打分 + 守卫循环，打包成 Agent Skill |
 
 ## 约定
 
