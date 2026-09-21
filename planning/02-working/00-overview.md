@@ -20,6 +20,7 @@
 | 07 | jev-phishing-bench | 2000 封邮件配对基准，方法学最严谨 | ❌ 81.3% 实为 Claude Haiku 4.5（通用 LLM），**非专用分类器** |
 | 08 | WindTunnel | WebMCP 表征基准 3087 attempts：WebMCP 满分且便宜 3–47×、快 2.5–7.5× | ⚠️ 25/49→49/49 属实，但"44pp"应为 +24pp；成功率上 WebMCP 并非独占满分，区分度在成本/时间 |
 | 09 | jev-browser | Jev 单循环 1.8s / $0.0005 / 97%，程序化验证可复现 | ✅ 三数字全部可证实 |
+| 11 | fast-browser-use (APUS-AI-Lab) | Jev 范式的 100% 本地复现（Qwen3.5-9B/35B-A3B 单 token logits 打分），产品级守卫循环 + Agent Skill | 无对比 Jev 的实验，为"替代品存在"的产品化证明；性能数据全部自测（3 次试验） |
 
 ## 文章失真点汇总（引用注意）
 
