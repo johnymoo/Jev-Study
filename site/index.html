@@ -40,7 +40,8 @@ hr { border:none; border-top:1px solid var(--border); margin:24px 0; }
 <nav>
   <h1>Jev_study</h1>
   <div class="sub">Jev 复现生态调研 · 2026-09-20<br>源：yage.ai 文章 × 9 仓库一手核验</div>
-  <a href="#00-overview">★ 总览</a>
+  <a href="jev-visual.html">🎛 交互式可视化 · 路由计算器</a>
+<a href="#00-overview">★ 总览</a>
 <a href="#01-openjev-semif"> 01 · openjev (SemIf)</a>
 <a href="#02-jev-behavior-study"> 02 · jev-behavior-study</a>
 <a href="#03-jev-capability-atlas"> 03 · jev-capability-atlas</a>
@@ -51,85 +52,167 @@ hr { border:none; border-top:1px solid var(--border); margin:24px 0; }
 <a href="#08-windtunnel"> 08 · WindTunnel</a>
 <a href="#09-jev-browser"> 09 · jev-browser</a>
 <a href="#10-kev-nimble-training">★ 10 · Kev & Nimble 训练方法 ★</a>
+<a href="#12-jev-engineering-pdf">★ 12 · Jev Engineering PDF 解读</a>
 </nav>
 <main>
 <section id="00-overview"><h1>00 — Jev 复现生态调研总览</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>信息源：`planning/01-raw/jev-timing-analysis-20260919.md`（yage.ai 文章，2026-09-19）+ 9 个开源复现仓库的一手研读（报告 01–09）</li>
-<p></p>
+<li>信息源：<code>planning/01-raw/jev-timing-analysis-20260919.md</code>（yage.ai 文章，2026-09-19）+ 9 个开源复现仓库的一手研读（报告 01–09）</li>
+</ul>
 <h2>一句话结论</h2>
-<p></p>
-<p>文章的核心论点——**Jev 在技术上没有非买不可的理由，开源本地 logits 方案质量相当、更快、更确定，真正值得研究的是它出现的时机**——经 9 个仓库一手核验后**方向成立**，但文章对个别仓库数据的转述存在三处失真（见第三节），引用时应以各仓库报告为准。</p>
-<p></p>
+<p>文章的核心论点——<strong>Jev 在技术上没有非买不可的理由，开源本地 logits 方案质量相当、更快、更确定，真正值得研究的是它出现的时机</strong>——经 9 个仓库一手核验后<strong>方向成立</strong>，但文章对个别仓库数据的转述存在三处失真（见第三节），引用时应以各仓库报告为准。</p>
 <h2>九个仓库验证了什么</h2>
-<p></p>
-<tr><th>#</th><th>仓库</th><th>核心贡献</th><th>文章数据核验</th></tr>
-<tr><th>01</th><th>openjev (SemIf)</th><th>冻结 Qwen3.5-4B 直接读选项 logits，零训练复现接口模式</th><th>102 任务子集/84.5%/88.3% 均在仓库中；但仓库自声明**未复跑 Jev**、样本小且经挑选</th></tr>
-<tr><td>02</td><td>jev-behavior-study</td><td>预注册式行为研究：输入表征 1/16→14/16（87.5pp 收益）</td><td>✅ 最强证据；但 16/16 属"求解器喂路线"的 assisted 上限实验</td></tr>
-<tr><td>03</td><td>jev-capability-atlas</td><td>能力边界图谱，要求 API 调用收据</td><td>MMLU-Pro 83%/60% 未见于仓库，系文章另引</td></tr>
-<tr><td>04</td><td>jevfire</td><td>vLLM/WebGPU 并行分类解码，马里奥 71.26ms/步，CUDA 侧比约束 JSON 生成快 10.3×</td><td>✅ 71.26ms 有 measurement receipt；注意是 0.8B+排除开销的口径</td></tr>
-<tr><td>05</td><td>jev-ultrafast</td><td>Browser Use 官方优化：9.450s→7.092s、协议调用 1092→101，同 Jev 同文本模型</td><td>✅ 全部可证实；仓库自标 3 对样本 p=0.25 不足强统计声明</td></tr>
-<tr><td>06</td><td>jev-demos</td><td>迷宫一致性：相同请求不同答案、长视野求解率归零（quick preset）</td><td>✅ 第一手证实；但小迷宫+邻接提示下显著回升</td></tr>
-<tr><td>07</td><td>jev-phishing-bench</td><td>2000 封邮件配对基准，方法学最严谨</td><td>❌ 81.3% 实为 Claude Haiku 4.5（通用 LLM），**非专用分类器**</td></tr>
-<tr><td>08</td><td>WindTunnel</td><td>WebMCP 表征基准 3087 attempts：WebMCP 满分且便宜 3–47×、快 2.5–7.5×</td><td>⚠️ 25/49→49/49 属实，但"44pp"应为 +24pp；成功率上 WebMCP 并非独占满分，区分度在成本/时间</td></tr>
-<tr><td>09</td><td>jev-browser</td><td>Jev 单循环 1.8s / $0.0005 / 97%，程序化验证可复现</td><td>✅ 三数字全部可证实</td></tr>
-<tr><td>11</td><td>fast-browser-use (APUS-AI-Lab)</td><td>Jev 范式的 100% 本地复现（Qwen3.5-9B/35B-A3B 单 token logits 打分），产品级守卫循环 + Agent Skill</td><td>无对比 Jev 的实验，为"替代品存在"的产品化证明；性能数据全部自测（3 次试验）</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>仓库</th>
+<th>核心贡献</th>
+<th>文章数据核验</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01</td>
+<td>openjev (SemIf)</td>
+<td>冻结 Qwen3.5-4B 直接读选项 logits，零训练复现接口模式</td>
+<td>102 任务子集/84.5%/88.3% 均在仓库中；但仓库自声明<strong>未复跑 Jev</strong>、样本小且经挑选</td>
+</tr>
+<tr>
+<td>02</td>
+<td>jev-behavior-study</td>
+<td>预注册式行为研究：输入表征 1/16→14/16（87.5pp 收益）</td>
+<td>✅ 最强证据；但 16/16 属"求解器喂路线"的 assisted 上限实验</td>
+</tr>
+<tr>
+<td>03</td>
+<td>jev-capability-atlas</td>
+<td>能力边界图谱，要求 API 调用收据</td>
+<td>MMLU-Pro 83%/60% 未见于仓库，系文章另引</td>
+</tr>
+<tr>
+<td>04</td>
+<td>jevfire</td>
+<td>vLLM/WebGPU 并行分类解码，马里奥 71.26ms/步，CUDA 侧比约束 JSON 生成快 10.3×</td>
+<td>✅ 71.26ms 有 measurement receipt；注意是 0.8B+排除开销的口径</td>
+</tr>
+<tr>
+<td>05</td>
+<td>jev-ultrafast</td>
+<td>Browser Use 官方优化：9.450s→7.092s、协议调用 1092→101，同 Jev 同文本模型</td>
+<td>✅ 全部可证实；仓库自标 3 对样本 p=0.25 不足强统计声明</td>
+</tr>
+<tr>
+<td>06</td>
+<td>jev-demos</td>
+<td>迷宫一致性：相同请求不同答案、长视野求解率归零（quick preset）</td>
+<td>✅ 第一手证实；但小迷宫+邻接提示下显著回升</td>
+</tr>
+<tr>
+<td>07</td>
+<td>jev-phishing-bench</td>
+<td>2000 封邮件配对基准，方法学最严谨</td>
+<td>❌ 81.3% 实为 Claude Haiku 4.5（通用 LLM），<strong>非专用分类器</strong></td>
+</tr>
+<tr>
+<td>08</td>
+<td>WindTunnel</td>
+<td>WebMCP 表征基准 3087 attempts：WebMCP 满分且便宜 3–47×、快 2.5–7.5×</td>
+<td>⚠️ 25/49→49/49 属实，但"44pp"应为 +24pp；成功率上 WebMCP 并非独占满分，区分度在成本/时间</td>
+</tr>
+<tr>
+<td>09</td>
+<td>jev-browser</td>
+<td>Jev 单循环 1.8s / $0.0005 / 97%，程序化验证可复现</td>
+<td>✅ 三数字全部可证实</td>
+</tr>
+<tr>
+<td>11</td>
+<td>fast-browser-use (APUS-AI-Lab)</td>
+<td>Jev 范式的 100% 本地复现（Qwen3.5-9B/35B-A3B 单 token logits 打分），产品级守卫循环 + Agent Skill</td>
+<td>无对比 Jev 的实验，为"替代品存在"的产品化证明；性能数据全部自测（3 次试验）</td>
+</tr>
+</tbody>
+</table>
 <h2>文章失真点汇总（引用注意）</h2>
-<p></p>
-<p>1. **07 钓鱼基准**：文章称&quot;专用分类器 81.3% vs 零样本判断模型 62.6%&quot;——81.3% 实为 Claude Haiku 4.5。仓库真实教训更尖锐：Jev 钓鱼召回仅 43.2%，最佳单信号 89.4% 还不如两行正则（91.8%）；其价值只在便宜地提供可回归的中间信号（便宜约 27×）。</p>
-<p>2. **08 WindTunnel**：&quot;44 个百分点&quot;换算错误，实际 25/49→49/49 为 +24pp；且 10 个配置（9 个 WebMCP + Astra 代码执行）都满分，成功率上 WebMCP 与最强截图方案打平，**接口表征决定的是成本与速度而非成功率**。</p>
-<p>3. **02 行为研究**：16/16 满分来自早期 assisted 研究（代码算好精确路线长度供 Jev 选择），不能当作&quot;纯输入改写可达满分&quot;。</p>
-<p></p>
+<ol>
+<li><strong>07 钓鱼基准</strong>：文章称"专用分类器 81.3% vs 零样本判断模型 62.6%"——81.3% 实为 Claude Haiku 4.5。仓库真实教训更尖锐：Jev 钓鱼召回仅 43.2%，最佳单信号 89.4% 还不如两行正则（91.8%）；其价值只在便宜地提供可回归的中间信号（便宜约 27×）。</li>
+<li><strong>08 WindTunnel</strong>："44 个百分点"换算错误，实际 25/49→49/49 为 +24pp；且 10 个配置（9 个 WebMCP + Astra 代码执行）都满分，成功率上 WebMCP 与最强截图方案打平，<strong>接口表征决定的是成本与速度而非成功率</strong>。</li>
+<li><strong>02 行为研究</strong>：16/16 满分来自早期 assisted 研究（代码算好精确路线长度供 Jev 选择），不能当作"纯输入改写可达满分"。</li>
+</ol>
 <p>另外：文章称 truestandard.ai ECE 评测与 MMLU-Pro 数据来自 Zaious 图谱——MMLU-Pro 83%/60% 在 capability-atlas 仓库中未见对应（03 报告），truestandard.ai 为第三方网站未克隆。</p>
-<p></p>
 <h2>跨仓库综合观察</h2>
-<p></p>
-<p>1. **&quot;logits 提取无壁垒&quot;被最直接证实**：SemIf（04B 冻结模型直读）、jevfire（tribute 致谢 Jev 的独立实现）、vllm#57250 的 DiffusionGemma demo 走的都是同一条路，社区 72 小时内多路线复现属实。</p>
-<p>2. **一致性是真实短板**：jev-demos（相同请求不同答案）与 phishing-bench（2.2% 标签翻转）独立观察到；SemIf 的 BF16 前缀复用路径也有 5–6/777 的 argmax 漂移。下游必须保留置信度缓冲带（官方 0.30–0.70 转人工）。</p>
-<p>3. **表征 &gt; 模型**是四个仓库（02、05、08、09）的共同主线：输入状态表达、结构化控件表、WebMCP 工具化、确定性验证 + 升级契约，收益都是数量级；判断模型本身只贡献稳定的百毫秒决策。</p>
-<p>4. **能力边界一致**：长视野多步规划（迷宫）、纯阅读抽取、回溯类任务都不是判断模型的地盘；高频收敛的&quot;单步裁判&quot;才是。</p>
-<p>5. **时点判断**：所有仓库集中在 2026-09-15（Jev 发布）后 2–4 天内出现且引用同一批官方文档/发布物，印证文章&quot;需求侧 agent 化 + 供给侧蒸馏基座 + 分发&quot;三力合流的时机论。</p>
-<p></p>
+<ol>
+<li><strong>"logits 提取无壁垒"被最直接证实</strong>：SemIf（04B 冻结模型直读）、jevfire（tribute 致谢 Jev 的独立实现）、vllm#57250 的 DiffusionGemma demo 走的都是同一条路，社区 72 小时内多路线复现属实。</li>
+<li><strong>一致性是真实短板</strong>：jev-demos（相同请求不同答案）与 phishing-bench（2.2% 标签翻转）独立观察到；SemIf 的 BF16 前缀复用路径也有 5–6/777 的 argmax 漂移。下游必须保留置信度缓冲带（官方 0.30–0.70 转人工）。</li>
+<li><strong>表征 &gt; 模型</strong>是四个仓库（02、05、08、09）的共同主线：输入状态表达、结构化控件表、WebMCP 工具化、确定性验证 + 升级契约，收益都是数量级；判断模型本身只贡献稳定的百毫秒决策。</li>
+<li><strong>能力边界一致</strong>：长视野多步规划（迷宫）、纯阅读抽取、回溯类任务都不是判断模型的地盘；高频收敛的"单步裁判"才是。</li>
+<li><strong>时点判断</strong>：所有仓库集中在 2026-09-15（Jev 发布）后 2–4 天内出现且引用同一批官方文档/发布物，印证文章"需求侧 agent 化 + 供给侧蒸馏基座 + 分发"三力合流的时机论。</li>
+</ol>
 <h2>建议的后续实验（仓库未覆盖的空白）</h2>
-<p></p>
+<ul>
 <li>在严格一致的前端表征下，对比极速通用大模型与专用判断模型（文章与 WindTunnel 均承认该消融缺失）。</li>
-<li>用本机可部署模型（如 GB10 上的 Qwen3.5 系列）复跑 SemIf 的 direct logits 管线，验证 84.5% 的可迁移性。</li></section>
+<li>用本机可部署模型（如 GB10 上的 Qwen3.5 系列）复跑 SemIf 的 direct logits 管线，验证 84.5% 的可迁移性。</li>
+</ul></section>
 <section id="01-openjev-semif"><h1>OpenJev / SemIf 调研报告</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库 commit：`ca3ba65`（浅克隆，路径 `planning/01-raw/repos/openjev`）</li>
+<li>仓库 commit：<code>ca3ba65</code>（浅克隆，路径 <code>planning/01-raw/repos/openjev</code>）</li>
 <li>读取文件：README.md、docs/RESULTS.md、pyproject.toml、benchmarks/verify_published.py（grep 定位，全文未读）、目录清单</li>
-<p></p>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>SemIf（原名 OpenJev）是一个独立开源研究项目，自称复现 TypeSafe 闭源服务 **Jev** 的&quot;接口模式&quot;（runtime-defined 语义决策），而非复现 Jev 的模型或训练。核心思路：多数 agent 决策是小型分类（路由、重试、证据是否支持 X），与其让模型生成文本再解析成 `if`，不如**一次前向传播直接读出各类型化选项的 logits 概率**——无答案生成、无 JSON 修复、无解码循环。支持浏览器 WebGPU demo 与 Python CLI 两种使用方式。</p>
-<p></p>
+<p>SemIf（原名 OpenJev）是一个独立开源研究项目，自称复现 TypeSafe 闭源服务 <strong>Jev</strong> 的"接口模式"（runtime-defined 语义决策），而非复现 Jev 的模型或训练。核心思路：多数 agent 决策是小型分类（路由、重试、证据是否支持 X），与其让模型生成文本再解析成 <code>if</code>，不如<strong>一次前向传播直接读出各类型化选项的 logits 概率</strong>——无答案生成、无 JSON 修复、无解码循环。支持浏览器 WebGPU demo 与 Python CLI 两种使用方式。</p>
 <h2>实现原理</h2>
-<p></p>
-<li>**基座模型：Qwen/Qwen3.5-4B**（冻结，BF16 原生推理；README 指定固定 revision `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`）。浏览器 demo 另含 Qwen3-0.6B、MiniCPM5-2B（GGUF 量化）。</li>
-<li>**直接读出（direct）**：输入 = 非结构化 state + 运行时 criteria + 类型化选项描述；一次前向传播读取声明的选项字母 token 的原生 next-token logits，softmax 得到概率对。前一个 agent 已确认源码存在 `PROMPT_VERSION=&#x27;direct-options-v1&#x27;` 与字母 token logits 的 softmax 归一化，与 README 描述一致。</li>
-<li>**共享状态复用**：同一长 state prefill 一次后可在多个 criteria 间并行分支（serial prefix reuse / parallel suffixes），速度从 2.33 decisions/s 提升到 20.03 decisions/s（777 决策 333s→38.8s，RTX 3090）；代价是 BF16 复用路径下 777 个 argmax 中 5–6 个漂移（仓库如实标注）。</li>
-<li>**对照实现**：Qwen3-Reranker-4B 作为原生 reranker 基线，在通用决策任务上明显弱于 direct logits（-0.115 ~ -0.188 balanced accuracy），仅检索排序时有用。</li>
-<li>**MLX 后端**（macOS arm64）：直接评分、串行前缀复用、并行共享状态决策。</li>
-<p></p>
+<ul>
+<li><strong>基座模型：Qwen/Qwen3.5-4B</strong>（冻结，BF16 原生推理；README 指定固定 revision <code>851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a</code>）。浏览器 demo 另含 Qwen3-0.6B、MiniCPM5-2B（GGUF 量化）。</li>
+<li><strong>直接读出（direct）</strong>：输入 = 非结构化 state + 运行时 criteria + 类型化选项描述；一次前向传播读取声明的选项字母 token 的原生 next-token logits，softmax 得到概率对。前一个 agent 已确认源码存在 <code>PROMPT_VERSION='direct-options-v1'</code> 与字母 token logits 的 softmax 归一化，与 README 描述一致。</li>
+<li><strong>共享状态复用</strong>：同一长 state prefill 一次后可在多个 criteria 间并行分支（serial prefix reuse / parallel suffixes），速度从 2.33 decisions/s 提升到 20.03 decisions/s（777 决策 333s→38.8s，RTX 3090）；代价是 BF16 复用路径下 777 个 argmax 中 5–6 个漂移（仓库如实标注）。</li>
+<li><strong>对照实现</strong>：Qwen3-Reranker-4B 作为原生 reranker 基线，在通用决策任务上明显弱于 direct logits（-0.115 ~ -0.188 balanced accuracy），仅检索排序时有用。</li>
+<li><strong>MLX 后端</strong>（macOS arm64）：直接评分、串行前缀复用、并行共享状态决策。</li>
+</ul>
 <h2>评测与验证（文章声称 vs 仓库证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>结论</th></tr>
-<tr><th>冻结 Qwen3.5-4B，零训练/零采样只读</th><th>README 明确"frozen Qwen3.5-4B""no answer token is sampled"；RESULTS.md 明确未做 RLCD/训练</th><th>**可证实**</th></tr>
-<tr><td>官方 102 个判断任务</td><td>README/RESULTS.md 均写 "TypeSafe selected subset, 102 rows across 20 cases"；verify_published.py 引用键 `typesafe_public_102_equal_case_modal_agreement`</td><td>**可证实**（但注意：这是"从公开产物可对齐的 102 行子集"，非 TypeSafe 报告的 711 行全量）</td></tr>
-<tr><td>SemIf 一致率 84.5%</td><td>RESULTS.md：TypeSafe subset modal agreement = **0.845**，另报告 TV 距离 0.177（Jev 为 0.127）</td><td>**可证实**（数值在仓库中，行级预测与原始结果在 `results/raw/`，但我未逐行核验数据文件本身）</td></tr>
-<tr><td>Jev 88.3%</td><td>README/RESULTS.md："Published Jev … 0.883"，且明确声明"we did not run a live Jev endpoint"，该数字是从 TypeSafe 公开发表记录读取的</td><td>**数值存在但不可独立证实**——仓库方自己强调样本小且经挑选、Jev 未经其复跑</td></tr>
-<tr><td>复现 Jev 能力</td><td>仓库明确"Not reproduced"：Jev 未公开架构、并行采样器、RLCD 训练</td><td>**不可证实**；仓库立场是复现接口模式，差距 3.8 个百分点</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>冻结 Qwen3.5-4B，零训练/零采样只读</td>
+<td>README 明确"frozen Qwen3.5-4B""no answer token is sampled"；RESULTS.md 明确未做 RLCD/训练</td>
+<td><strong>可证实</strong></td>
+</tr>
+<tr>
+<td>官方 102 个判断任务</td>
+<td>README/RESULTS.md 均写 "TypeSafe selected subset, 102 rows across 20 cases"；verify_published.py 引用键 <code>typesafe_public_102_equal_case_modal_agreement</code></td>
+<td><strong>可证实</strong>（但注意：这是"从公开产物可对齐的 102 行子集"，非 TypeSafe 报告的 711 行全量）</td>
+</tr>
+<tr>
+<td>SemIf 一致率 84.5%</td>
+<td>RESULTS.md：TypeSafe subset modal agreement = <strong>0.845</strong>，另报告 TV 距离 0.177（Jev 为 0.127）</td>
+<td><strong>可证实</strong>（数值在仓库中，行级预测与原始结果在 <code>results/raw/</code>，但我未逐行核验数据文件本身）</td>
+</tr>
+<tr>
+<td>Jev 88.3%</td>
+<td>README/RESULTS.md："Published Jev … 0.883"，且明确声明"we did not run a live Jev endpoint"，该数字是从 TypeSafe 公开发表记录读取的</td>
+<td><strong>数值存在但不可独立证实</strong>——仓库方自己强调样本小且经挑选、Jev 未经其复跑</td>
+</tr>
+<tr>
+<td>复现 Jev 能力</td>
+<td>仓库明确"Not reproduced"：Jev 未公开架构、并行采样器、RLCD 训练</td>
+<td><strong>不可证实</strong>；仓库立场是复现接口模式，差距 3.8 个百分点</td>
+</tr>
+</tbody>
+</table>
 <p>其他仓库内评测（direct Qwen3.5-4B）：自建 144 行 balanced accuracy 0.813；WANLI 256 行 0.637；judgment grid 0.806；鲁棒性扰动测试（选项反转/无关上下文等）显示选项顺序敏感仍是已知缺陷。</p>
-<p></p>
 <h2>使用方式</h2>
-<p></p>
-<pre><code># 依赖安装（Python 3.10+，CUDA GPU 可容纳 4B BF16）
-pip install -e &#x27;.[test]&#x27;
-# Apple Silicon 可选 MLX 后端：pip install -e &#x27;.[test,mlx]&#x27;，加 --backend mlx
+<pre><code class="language-bash"># 依赖安装（Python 3.10+，CUDA GPU 可容纳 4B BF16）
+pip install -e '.[test]'
+# Apple Silicon 可选 MLX 后端：pip install -e '.[test,mlx]'，加 --backend mlx
 
 CUDA_VISIBLE_DEVICES=0 semif-score \
   --mode direct \
@@ -137,360 +220,877 @@ CUDA_VISIBLE_DEVICES=0 semif-score \
   --revision 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a \
   --input examples/decisions.jsonl \
   --output results.jsonl
-# 同 state 多 criteria 时用 --mode shared：prefill 一次并行评估</code></pre>
-<p></p>
-<p>输入 JSONL 行格式：`{id, state, question, options:[{id, description}]}`；输出含类型化选项概率、计时、模型 revision、prompt hash。浏览器版：仓库内 `webgpu-demo/index.html`（WebGPU，GGUF 量化模型）。复现脚本在 `benchmarks/`（evaluate.py、verify_published.py、shape777.py 等），文档在 `docs/REPRODUCE.md`、`docs/RESULTS.md`。</p>
-<p></p>
+# 同 state 多 criteria 时用 --mode shared：prefill 一次并行评估
+</code></pre>
+<p>输入 JSONL 行格式：<code>{id, state, question, options:[{id, description}]}</code>；输出含类型化选项概率、计时、模型 revision、prompt hash。浏览器版：仓库内 <code>webgpu-demo/index.html</code>（WebGPU，GGUF 量化模型）。复现脚本在 <code>benchmarks/</code>（evaluate.py、verify_published.py、shape777.py 等），文档在 <code>docs/REPRODUCE.md</code>、<code>docs/RESULTS.md</code>。</p>
 <h2>依赖</h2>
-<p></p>
-<p>pyproject.toml：torch 2.10.0、transformers 5.17.0、accelerate 1.12.0、safetensors、huggingface-hub 1.31.0、tokenizers 0.23.2、numpy 2.2.6、sentencepiece、protobuf；可选 mlx / mlx-lm（仅 macOS arm64）、pytest。打包名 `semif-phase1`，CLI 入口 `semif-score`。</p>
-<p></p>
+<p>pyproject.toml：torch 2.10.0、transformers 5.17.0、accelerate 1.12.0、safetensors、huggingface-hub 1.31.0、tokenizers 0.23.2、numpy 2.2.6、sentencepiece、protobuf；可选 mlx / mlx-lm（仅 macOS arm64）、pytest。打包名 <code>semif-phase1</code>，CLI 入口 <code>semif-score</code>。</p>
 <h2>评估结论</h2>
-<p></p>
+<ul>
 <li>实现与声称基本自洽：仓库代码、README、RESULTS 与 benchmark 脚本三方对齐，102 行 / 0.845 / 0.883 均在仓库文档中有明确出处，且附行级预测与原始结果文件，可信度较高。</li>
-<li>需注意口径：0.845 是&quot;可从公开产物对齐的 102 行挑选子集&quot;上的 modal agreement，不是全量；0.883 是 TypeSafe 自报数，仓库方未运行 Jev、未独立验证，且作者自己强调该对比&quot;不确立 near-Jev 能力&quot;（概率质量 TV 距离 0.177 vs 0.127 有明显差距）。</li>
+<li>需注意口径：0.845 是"可从公开产物对齐的 102 行挑选子集"上的 modal agreement，不是全量；0.883 是 TypeSafe 自报数，仓库方未运行 Jev、未独立验证，且作者自己强调该对比"不确立 near-Jev 能力"（概率质量 TV 距离 0.177 vs 0.127 有明显差距）。</li>
 <li>技术亮点是 decision-native 直读 logits + 共享状态复用的系统路径（5.2× 快于生成式基线），而非模型能力超越 Jev。</li>
-<li>建议在引用时表述为：&quot;SemIf 用冻结 Qwen3.5-4B 以 direct logits 方式在 TypeSafe 公开 102 行子集上达到 0.845 一致率（Jev 自报 0.883，未经独立验证）&quot;。</li></section>
+<li>建议在引用时表述为："SemIf 用冻结 Qwen3.5-4B 以 direct logits 方式在 TypeSafe 公开 102 行子集上达到 0.845 一致率（Jev 自报 0.883，未经独立验证）"。</li>
+</ul></section>
 <section id="02-jev-behavior-study"><h1>02 — jev-behavior-study（Jev 行为研究：输入表征杠杆）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/RINNECODER/jev-behavior-study，commit `e4a1d7e`（2026-09-17）</li>
-<p></p>
+<li>仓库：https://github.com/RINNECODER/jev-behavior-study，commit <code>e4a1d7e</code>（2026-09-17）</li>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>对 Jev（`jev-1.13.0`）的大规模行为研究，含贪吃蛇（snake_demo）、城市 demo、日常推理、洗车/平地/斜视等多个基准报告，全部带 PROTOCOL.md（预注册式协议：候选配置先冻结再上 held-out 种子 9101–9116，事后不修改提示词、不换种子、不重试）与 QA.md。</p>
-<p></p>
+<p>对 Jev（<code>jev-1.13.0</code>）的大规模行为研究，含贪吃蛇（snake_demo）、城市 demo、日常推理、洗车/平地/斜视等多个基准报告，全部带 PROTOCOL.md（预注册式协议：候选配置先冻结再上 held-out 种子 9101–9116，事后不修改提示词、不换种子、不重试）与 QA.md。</p>
 <h2>研究方法</h2>
-<p></p>
-<li>**无辅助（unassisted）贪吃蛇**：12×12 棋盘、8 食目标、200 步上限；Jev 的最终选择原样执行，求解器只在游戏结束后用于打分，不进入任何模型请求（无路线答案、无安全标签、无动作掩码）。</li>
+<ul>
+<li><strong>无辅助（unassisted）贪吃蛇</strong>：12×12 棋盘、8 食目标、200 步上限；Jev 的最终选择原样执行，求解器只在游戏结束后用于打分，不进入任何模型请求（无路线答案、无安全标签、无动作掩码）。</li>
 <li>开发集 80 状态上测 8 种输入变体（原始/显式优先级/散文描述/ASCII 网格/头相对坐标/四步历史/绝对方向/双调用自审），预声明选择规则冻结决赛配置后再跑 16 局 held-out。</li>
-<li>调用量：主研究 4,515 次成功调用；开发+holdout 阶段另有 720 请求；全仓库基准汇总 `valid_calls=6,394`（另有 city/carwash/平地等报告），与文章&quot;超过 1.1 万次调用&quot;量级相符（合计口径）。</li>
-<p></p>
+<li>调用量：主研究 4,515 次成功调用；开发+holdout 阶段另有 720 请求；全仓库基准汇总 <code>valid_calls=6,394</code>（另有 city/carwash/平地等报告），与文章"超过 1.1 万次调用"量级相符（合计口径）。</li>
+</ul>
 <h2>关键发现（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>超过 1.1 万次调用</th><th>单 snake 主研究 4,515 次、汇总 6,394 valid calls；各 demo 报告合计上万量级</th><th>✅ 大体可证实（取决于合计口径）</th></tr>
-<tr><td>输入改成清晰状态陈述 1/16 → 14/16</td><td>unassisted REPORT：Original 1/16 vs Prose description **14/16**（Wilson 95%: 64.0–96.5%），冻结配置后 held-out，含配对比较</td><td>✅ 可证实，且方法学严谨</td></tr>
-<tr><td>路径事实写进输入达 16/16</td><td>仓库明确区分：16/16 属于**早期 assisted 研究**（Jev 从代码算出的精确路线长度中选择）；unassisted 研究特意不提供任何路线信息</td><td>⚠️ 数字存在但语境不同：那是"求解器喂答案"的上限实验，非同等条件对比</td></tr>
-<tr><td>输入表征是决定性杠杆</td><td>80 状态开发集：Prose 70/80 最短路 vs Original 55/80；head-relative 坐标单步 78/80 却在完整对局中撞车被预声明规则淘汰——表征好坏要看任务视野</td><td>✅ 定性可证实</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>超过 1.1 万次调用</td>
+<td>单 snake 主研究 4,515 次、汇总 6,394 valid calls；各 demo 报告合计上万量级</td>
+<td>✅ 大体可证实（取决于合计口径）</td>
+</tr>
+<tr>
+<td>输入改成清晰状态陈述 1/16 → 14/16</td>
+<td>unassisted REPORT：Original 1/16 vs Prose description <strong>14/16</strong>（Wilson 95%: 64.0–96.5%），冻结配置后 held-out，含配对比较</td>
+<td>✅ 可证实，且方法学严谨</td>
+</tr>
+<tr>
+<td>路径事实写进输入达 16/16</td>
+<td>仓库明确区分：16/16 属于<strong>早期 assisted 研究</strong>（Jev 从代码算出的精确路线长度中选择）；unassisted 研究特意不提供任何路线信息</td>
+<td>⚠️ 数字存在但语境不同：那是"求解器喂答案"的上限实验，非同等条件对比</td>
+</tr>
+<tr>
+<td>输入表征是决定性杠杆</td>
+<td>80 状态开发集：Prose 70/80 最短路 vs Original 55/80；head-relative 坐标单步 78/80 却在完整对局中撞车被预声明规则淘汰——表征好坏要看任务视野</td>
+<td>✅ 定性可证实</td>
+</tr>
+</tbody>
+</table>
 <p>补充发现：绝对方向 12/16、散文描述平均吃食 7.19 vs 3.06；API 中断按删失处理并如实披露；在贪吃蛇上确定性基线显著优于两个 Jev 配置。</p>
-<p></p>
 <h2>评估结论</h2>
-<p></p>
-<p>这是 9 个仓库中方法学最接近学术论文的一个（预注册、held-out、配对检验、删失处理）。它给文章最核心的论点——**&quot;决定成败的是工程端的状态表达，而非模型间几个百分点&quot;**——提供了最强的一手证据（1/16→14/16 = 87.5pp 的表征收益）。需修正的是：16/16 的满分来自喂入精确路线的 assisted 设置，不能作为&quot;纯输入改写可达满分&quot;的证据。</p></section>
+<p>这是 9 个仓库中方法学最接近学术论文的一个（预注册、held-out、配对检验、删失处理）。它给文章最核心的论点——<strong>"决定成败的是工程端的状态表达，而非模型间几个百分点"</strong>——提供了最强的一手证据（1/16→14/16 = 87.5pp 的表征收益）。需修正的是：16/16 的满分来自喂入精确路线的 assisted 设置，不能作为"纯输入改写可达满分"的证据。</p></section>
 <section id="03-jev-capability-atlas"><h1>jev-capability-atlas 仓库调研报告</h1>
-<p></p>
-<li>**研究日期**：2026-09-20</li>
-<li>**仓库 commit**：`9d4b6f8`（浅克隆，只读）</li>
-<li>**仓库路径**：`/home/chriswang/project/Jev_study/planning/01-raw/repos/jev-capability-atlas`</li>
-<li>**对照文章**：`/home/chriswang/project/Jev_study/planning/01-raw/jev-timing-analysis-20260919.md`</li>
-<p></p>
+<ul>
+<li><strong>研究日期</strong>：2026-09-20</li>
+<li><strong>仓库 commit</strong>：<code>9d4b6f8</code>（浅克隆，只读）</li>
+<li><strong>仓库路径</strong>：<code>/home/chriswang/project/Jev_study/planning/01-raw/repos/jev-capability-atlas</code></li>
+<li><strong>对照文章</strong>：<code>/home/chriswang/project/Jev_study/planning/01-raw/jev-timing-analysis-20260919.md</code></li>
+</ul>
 <h2>一、概述</h2>
-<p></p>
-<p>jev-capability-atlas 是一个**独立、非官方、非 TypeSafe 赞助**的社区项目（自称作者 Zaious，文章引用的也是 `github.com/Zaious/jev-capability-atlas`），研究对象是 TypeSafe 的 &quot;System One&quot; 模型 **Jev**——一个只能输出类型化答案（Choice/Score/Noul，即选选项/打分/是非）、不做自由文本生成、训练目标为置信度校准（RLCD）的窄判断模型。</p>
-<p></p>
-<p>项目定位明确：**不是排行榜**（明确引用 jev-benchmarks、thaiexam-jev-charts 而不重做），要回答的是&quot;什么情况下它强、什么情况下它弱、为什么&quot;。方法论纪律很突出：所有自测条目要求&quot;真实 API 调用收据&quot;（原始 log 存于 `suites/&lt;slug&gt;/runs/`），第三方数据须附一手来源；来源分级标签 🔬（自测）/ 📚（第三方跑分）/ 📖（官方文档）/ 💭（综合分析）。</p>
-<p></p>
+<p>jev-capability-atlas 是一个<strong>独立、非官方、非 TypeSafe 赞助</strong>的社区项目（自称作者 Zaious，文章引用的也是 <code>github.com/Zaious/jev-capability-atlas</code>），研究对象是 TypeSafe 的 "System One" 模型 <strong>Jev</strong>——一个只能输出类型化答案（Choice/Score/Noul，即选选项/打分/是非）、不做自由文本生成、训练目标为置信度校准（RLCD）的窄判断模型。</p>
+<p>项目定位明确：<strong>不是排行榜</strong>（明确引用 jev-benchmarks、thaiexam-jev-charts 而不重做），要回答的是"什么情况下它强、什么情况下它弱、为什么"。方法论纪律很突出：所有自测条目要求"真实 API 调用收据"（原始 log 存于 <code>suites/&lt;slug&gt;/runs/</code>），第三方数据须附一手来源；来源分级标签 🔬（自测）/ 📚（第三方跑分）/ 📖（官方文档）/ 💭（综合分析）。</p>
 <h2>二、图谱构成</h2>
-<p></p>
 <h3>核心判准轴（一条轴）</h3>
-<p></p>
-<p>&gt; **正确答案能否完全从喂给模型的 `state` 里读出来？**（信号自足 vs 需要外部知识）</p>
-<p></p>
-<tr><th>信号自足（✅）</th><th>信号不自足（⚠️）</th></tr>
-<tr><th>分类任务（AG News 91%、Banking77 87%）</th><th>纯知识回忆题（历史/常识考题，无背景段落）</th></tr>
-<tr><td>引用支持度判读（claim+quote 给齐）</td><td>需要与整个领域比较的评分（论文新颖性等）</td></tr>
-<tr><td>反讽/讽刺检测（触发线索在给定文字内，含跨回合）</td><td>类别本身重叠的分类（DAIR Emotion 48%，且置信度失准）</td></tr>
-<p></p>
+<blockquote>
+<p><strong>正确答案能否完全从喂给模型的 <code>state</code> 里读出来？</strong>（信号自足 vs 需要外部知识）</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>信号自足（✅）</th>
+<th>信号不自足（⚠️）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>分类任务（AG News 91%、Banking77 87%）</td>
+<td>纯知识回忆题（历史/常识考题，无背景段落）</td>
+</tr>
+<tr>
+<td>引用支持度判读（claim+quote 给齐）</td>
+<td>需要与整个领域比较的评分（论文新颖性等）</td>
+</tr>
+<tr>
+<td>反讽/讽刺检测（触发线索在给定文字内，含跨回合）</td>
+<td>类别本身重叠的分类（DAIR Emotion 48%，且置信度失准）</td>
+</tr>
+</tbody>
+</table>
 <h3>覆盖维度</h3>
-<p></p>
-<p>**自测 suites（🔬，5 组，均有 runs/2026-09-19.json 收据）：**</p>
-<p></p>
-<p>1. **citation-support-check**：引用支持度判读，5/5 全对（含改述低重叠、反转词高重叠两组对照），低信心（0.45）正确对应难例。</p>
-<p>2. **sarcasm-vs-sincere-praise**：反讽检测同句版 12/12、跨句版（计分题）10/10 全对；两个刻意模糊对照置信度分岔（0.19 vs 1.00）。原预测这是弱项，结果预测错了。</p>
-<p>3. **history-recall-context**：纯回忆 vs 给背景的三题对照（下文详述）——**仓库自称&quot;最重要的一笔反例&quot;**。</p>
-<p>4. **icu-alarm-classification**：PhysioNet 2015 ICU 心律警报 30 笔抽样，官方评分 0.271 输给&quot;全放行&quot;基线（0.39）；心搏停止/室速敏感度 0%。结论：state 里缺什么特征就补不回来，但错答置信度仅 0.14-0.51，无&quot;自信答错&quot;。</p>
-<p>5. **jev-latency-distribution**：30 次调用，中位 250ms、p95 299ms，唯一离群值是首次调用（连接冷启动），独立重现&quot;赢在没有长尾&quot;。</p>
-<p></p>
-<p>**第三方跑分整理（📚，13 条，只翻译整理不重跑）：** ThaiExam（567 题，70.7%，111 模型中段班，速度/成本同组最强）；jev-benchmarks（AG News 91%/Banking77 87%/DAIR Emotion 48% 且平均置信 0.819、16% 题目正解概率为零）；jev-browser vs Playwright MCP（快 1.5x/省 1.6x，但纯文字抽取任务反而更慢更贵）；jev-ultrafast（Browser Use 官方，中位快 25%、协议调用少 91%）；TypeSafe 首发评测的独立批评（参考答案是两个前沿模型回答的平均值，非人工标注）；工具调用风险分级（91.7%，答错时置信度诚实下修，无&quot;自信答错&quot;）；DSPy 信心门槛弃权（ECE 0.0583，N=24 过小）；context 压缩辩论（256 笔工具结果 0 笔保留分超 0.3，因 state 只给长度占位符）；SQL ORDER BY 排序（简单任务六判准全过，困难任务 ECE 0.045→0.242，批次 40 行失效）；LlamaIndex 重排序（nDCG@5 +0.056/+0.086）；重排融合评测（单独重排去循环后 -0.028，RRF 融合 +0.064 稳定成立）；拆解判断代价（困难良性案例误判率 1.5%→37.2%，约 25 倍）；mastra 内容审核（9/9 挡恶意、0 误判）；湖北新闻分类（与 Flash Lite 约 85% 一致，分歧集中在需要人名外部知识的案例）；广告拆解 embedding 宣称查证（技术解释站不住）。</p>
-<p></p>
+<p><strong>自测 suites（🔬，5 组，均有 runs/2026-09-19.json 收据）：</strong></p>
+<ol>
+<li><strong>citation-support-check</strong>：引用支持度判读，5/5 全对（含改述低重叠、反转词高重叠两组对照），低信心（0.45）正确对应难例。</li>
+<li><strong>sarcasm-vs-sincere-praise</strong>：反讽检测同句版 12/12、跨句版（计分题）10/10 全对；两个刻意模糊对照置信度分岔（0.19 vs 1.00）。原预测这是弱项，结果预测错了。</li>
+<li><strong>history-recall-context</strong>：纯回忆 vs 给背景的三题对照（下文详述）——<strong>仓库自称"最重要的一笔反例"</strong>。</li>
+<li><strong>icu-alarm-classification</strong>：PhysioNet 2015 ICU 心律警报 30 笔抽样，官方评分 0.271 输给"全放行"基线（0.39）；心搏停止/室速敏感度 0%。结论：state 里缺什么特征就补不回来，但错答置信度仅 0.14-0.51，无"自信答错"。</li>
+<li><strong>jev-latency-distribution</strong>：30 次调用，中位 250ms、p95 299ms，唯一离群值是首次调用（连接冷启动），独立重现"赢在没有长尾"。</li>
+</ol>
+<p><strong>第三方跑分整理（📚，13 条，只翻译整理不重跑）：</strong> ThaiExam（567 题，70.7%，111 模型中段班，速度/成本同组最强）；jev-benchmarks（AG News 91%/Banking77 87%/DAIR Emotion 48% 且平均置信 0.819、16% 题目正解概率为零）；jev-browser vs Playwright MCP（快 1.5x/省 1.6x，但纯文字抽取任务反而更慢更贵）；jev-ultrafast（Browser Use 官方，中位快 25%、协议调用少 91%）；TypeSafe 首发评测的独立批评（参考答案是两个前沿模型回答的平均值，非人工标注）；工具调用风险分级（91.7%，答错时置信度诚实下修，无"自信答错"）；DSPy 信心门槛弃权（ECE 0.0583，N=24 过小）；context 压缩辩论（256 笔工具结果 0 笔保留分超 0.3，因 state 只给长度占位符）；SQL ORDER BY 排序（简单任务六判准全过，困难任务 ECE 0.045→0.242，批次 40 行失效）；LlamaIndex 重排序（nDCG@5 +0.056/+0.086）；重排融合评测（单独重排去循环后 -0.028，RRF 融合 +0.064 稳定成立）；拆解判断代价（困难良性案例误判率 1.5%→37.2%，约 25 倍）；mastra 内容审核（9/9 挡恶意、0 误判）；湖北新闻分类（与 Flash Lite 约 85% 一致，分歧集中在需要人名外部知识的案例）；广告拆解 embedding 宣称查证（技术解释站不住）。</p>
 <p>另有 AGENTS.md（给 agent 的扫描判准）、browser-automation.md（浏览器自动化实施指南）、skill/jev-fit-check（打包成 Claude Skill）。</p>
-<p></p>
 <h3>机制定位（README 专节）</h3>
-<p></p>
-<p>三个否定句定义 Jev：不是状态机（真实语言理解，引 citation 两组对照为证）、不是瞎猜（confidence 是概率分布算出的统计量，RLCD 训练目标直指校准；但 DAIR Emotion 显示某些任务上置信度会往&quot;显得更有把握&quot;方向失准——最危险的失准方向）、不是推理模型（不做展开式多步推导）。关键区分：**类型保证 ≠ 正确性保证**——&quot;不可能输出选项外的值&quot;是数学保证，但选到哪个常常是错的。</p>
-<p></p>
+<p>三个否定句定义 Jev：不是状态机（真实语言理解，引 citation 两组对照为证）、不是瞎猜（confidence 是概率分布算出的统计量，RLCD 训练目标直指校准；但 DAIR Emotion 显示某些任务上置信度会往"显得更有把握"方向失准——最危险的失准方向）、不是推理模型（不做展开式多步推导）。关键区分：<strong>类型保证 ≠ 正确性保证</strong>——"不可能输出选项外的值"是数学保证，但选到哪个常常是错的。</p>
 <h2>三、关键发现（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<h3>声称 1：&quot;MMLU-Pro 上 Jev 83%，27B 开源模型 60%&quot; —— **不可证实**</h3>
-<p></p>
+<h3>声称 1："MMLU-Pro 上 Jev 83%，27B 开源模型 60%" —— <strong>不可证实</strong></h3>
+<ul>
 <li>全仓库 grep 无任何 MMLU 字样；capability-map.md 索引表和全部 translations 条目均未收录任何 MMLU-Pro 数据。</li>
-<li>文章把这句话与&quot;Zaious 的能力图谱显示……0.90 高置信度错误事实&quot;写在同一句里，读起来像是图谱的内容之一，**但 MMLU-Pro 83% vs 60% 这组数字在图谱中不存在**，未注明任何一手来源，属于文章自己的（未溯源）声称。可能出处是未收录的第三方跑分，无法从本仓库核实。</li>
-<p></p>
-<h3>声称 2：&quot;一旦输入缺少必要背景，Jev 会在 0.90 高置信度下给出错误事实&quot; —— **可证实，且有完整收据**</h3>
-<p></p>
-<p>`suites/history-recall-context/runs/2026-09-19.json`（真实 API 响应，jev-latest）：</p>
-<p></p>
-<tr><th>案例</th><th>题目</th><th>有无背景</th><th>选择</th><th>置信度</th><th>概率分布</th><th>对错</th></tr>
-<tr><th>A</th><th>大清第二任皇帝</th><th>无</th><th>雍正</th><th>**0.90**</th><th>0.04 / 0.93 / 0.03</th><th>✗（标准答案康熙）</th></tr>
-<tr><td>B</td><td>大清第七任皇帝（冷门）</td><td>无</td><td>咸丰</td><td>0.07</td><td>0.25 / 0.37 / 0.38</td><td>✓（但接近三选一蒙对）</td></tr>
-<tr><td>C</td><td>同 B + 背景段落</td><td>有</td><td>咸丰</td><td>0.97</td><td>0.00 / 0.02 / **0.98**</td><td>✓</td></tr>
-<p></p>
-<p>数字与文章声称精确吻合。但报告须如实转述仓库自己列出的限制：</p>
-<li>**N=3**、单一标注者（出题兼判标准答案）、仅中文历史一个领域；</li>
-<li>**案例 A 的标准答案本身有算法争议**（从 1644 顺治入关算第 2 任是康熙；从 1636 国号算第 2 任是顺治，三选项无严格正解），&quot;错误事实&quot;依赖于采用通俗算法这一判定；</li>
-<li>存在采样方差：案例 B 正式收据前的非存档同题跑分置信 0.08 选错（道光）。</li>
-<p></p>
-<p>因此准确的表述是：**&quot;存在一次高置信（0.90）答错的实测案例&quot;可证实；&quot;Jev 在缺背景时系统性给出错误事实&quot;这一泛化结论，仅凭本仓库证据（N=3、一题争议标准答案）不成立。** 仓库自己也只主张定性结论：&quot;裸记忆存在真实风险，给背景可以修正。&quot;</p>
-<p></p>
-<h3>声称 3（隐含）：&quot;信号自足任务表现好&quot; —— 可证实但多为小样本自测</h3>
-<p></p>
+<li>文章把这句话与"Zaious 的能力图谱显示……0.90 高置信度错误事实"写在同一句里，读起来像是图谱的内容之一，<strong>但 MMLU-Pro 83% vs 60% 这组数字在图谱中不存在</strong>，未注明任何一手来源，属于文章自己的（未溯源）声称。可能出处是未收录的第三方跑分，无法从本仓库核实。</li>
+</ul>
+<h3>声称 2："一旦输入缺少必要背景，Jev 会在 0.90 高置信度下给出错误事实" —— <strong>可证实，且有完整收据</strong></h3>
+<p><code>suites/history-recall-context/runs/2026-09-19.json</code>（真实 API 响应，jev-latest）：</p>
+<table>
+<thead>
+<tr>
+<th>案例</th>
+<th>题目</th>
+<th>有无背景</th>
+<th>选择</th>
+<th>置信度</th>
+<th>概率分布</th>
+<th>对错</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>大清第二任皇帝</td>
+<td>无</td>
+<td>雍正</td>
+<td><strong>0.90</strong></td>
+<td>0.04 / 0.93 / 0.03</td>
+<td>✗（标准答案康熙）</td>
+</tr>
+<tr>
+<td>B</td>
+<td>大清第七任皇帝（冷门）</td>
+<td>无</td>
+<td>咸丰</td>
+<td>0.07</td>
+<td>0.25 / 0.37 / 0.38</td>
+<td>✓（但接近三选一蒙对）</td>
+</tr>
+<tr>
+<td>C</td>
+<td>同 B + 背景段落</td>
+<td>有</td>
+<td>咸丰</td>
+<td>0.97</td>
+<td>0.00 / 0.02 / <strong>0.98</strong></td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>数字与文章声称精确吻合。但报告须如实转述仓库自己列出的限制：
+- <strong>N=3</strong>、单一标注者（出题兼判标准答案）、仅中文历史一个领域；
+- <strong>案例 A 的标准答案本身有算法争议</strong>（从 1644 顺治入关算第 2 任是康熙；从 1636 国号算第 2 任是顺治，三选项无严格正解），"错误事实"依赖于采用通俗算法这一判定；
+- 存在采样方差：案例 B 正式收据前的非存档同题跑分置信 0.08 选错（道光）。</p>
+<p>因此准确的表述是：<strong>"存在一次高置信（0.90）答错的实测案例"可证实；"Jev 在缺背景时系统性给出错误事实"这一泛化结论，仅凭本仓库证据（N=3、一题争议标准答案）不成立。</strong> 仓库自己也只主张定性结论："裸记忆存在真实风险，给背景可以修正。"</p>
+<h3>声称 3（隐含）："信号自足任务表现好" —— 可证实但多为小样本自测</h3>
+<ul>
 <li>自测三组（引用支持、反讽、历史-给背景）合计约 35 个计分案例，全对或近全对，有 API 收据；但样本小、题目由同一标注者设计，存在出题偏差风险。</li>
-<li>第三方大样本证据（jev-benchmarks 各 100 例、ThaiExam 567 题、工具调用 60 例、河北新闻 1000 笔抽样等）支持&quot;干净分类任务强&quot;的方向，但这些不是仓库自己重跑的。</li>
-<p></p>
+<li>第三方大样本证据（jev-benchmarks 各 100 例、ThaiExam 567 题、工具调用 60 例、河北新闻 1000 笔抽样等）支持"干净分类任务强"的方向，但这些不是仓库自己重跑的。</li>
+</ul>
 <h3>其他值得注意的发现（文章未提）</h3>
-<p></p>
-<li>**置信度校准的失败面**：DAIR Emotion 平均置信 0.819、实际 48%、16% 题目正解概率恰为零——校准失准方向是&quot;显得更有把握&quot;，与 history-recall 的 0.90 错答构成同一类风险的两个独立证据（一个 🔬 一个 📚）。</li>
-<li>**信号不自足的隐蔽形式**：context 压缩辩论中，state 只给占位符时 256 笔 0 笔保留分 &gt;0.3——不是模型错，是调用方没给内容。与湖北新闻人名案例、ICU 特征缺失案例共同印证核心轴。</li>
-<li>**成本立场**：订阅制下边际成本近零时插 Jev 只加延迟；Jev 划算的场景是原本每次判断单独付费调用大模型的场景。</li>
-<li>**官方评测的可信度缺陷**：TypeSafe 首发评测参考答案是两个前沿模型回答的平均值，非人工标注（dev.to / Anthony Maio 批评）。</li>
-<p></p>
-<h2>四、评估结论：&quot;答案无法从输入推导时模型记忆同样靠不住&quot;的证据强度</h2>
-<p></p>
-<p>**总体判定：方向有真实证据支撑，但证据规模小于文章给读者造成的印象。**</p>
-<p></p>
-<p>1. **支持证据（仓库内）**：</p>
-<p>   - history-recall-context 案例 A：0.90 置信答错常识史实题（🔬，唯一的高置信错误事实直接证据）；</p>
-<p>   - 案例 B→C 同题对照：无背景置信 0.07 近打平 → 给背景 0.98 答对，证明给 context 可修正；</p>
-<p>   - DAIR Emotion：类别重叠（需要超出给定文本的判别）时置信度系统性失准（📚，n=100）；</p>
-<p>   - 湖北新闻：人名-地点关联（外部知识）案例是唯一分歧集中区（📚，生产规模）；</p>
-<p>   - ICU 警报：state 缺判别所需特征时无法补救，虽然这次置信度诚实（0.14-0.51）。</p>
-<p></p>
-<p>2. **削弱因素**：直接证据仅 1 个案例且标准答案本身有算法争议；整套自测 N=3、单领域、出题与判分同一人；&quot;83% vs 60%&quot;的 MMLU-Pro 数字无溯源，不能作为&quot;记忆能力尚可&quot;或&quot;记忆靠不住&quot;任何一方的依据；采样方差使单次收据不可复现（仓库自己承认）。</p>
-<p></p>
-<p>3. **合理的最终表述**：仓库的证据足以支撑**定性**命题——&quot;Jev 的裸记忆不可靠且可能以高置信出错，可靠能力来自 state 内文本的阅读理解；答案不在输入里时应先检索补齐 context，而不是指望模型记得&quot;。文章把这句定性结论与一条无来源的 MMLU-Pro 数字捆绑引用，是超出仓库证据的强化表述；引用时应拆开：定性结论**可证实**（附上述限制），量化对比**不可证实**。</p>
-<p></p>
-<p>4. **对 Jev 能力边界的图谱结论**（仓库自己的归纳，值得采信）：Jev 适合&quot;大量、窄、平行、答案在给定文本内&quot;的判断层；不适合纯知识回忆、类别模糊分类、需全域比较的评分、纯阅读理解（比 LLM 慢贵）、以及不可逆动作的无人监督决策（context 删除案例）。置信度数值&quot;在某些任务上会往过度自信方向失准&quot;，三段式信心门槛的阈值必须在自有数据上重新验证。</p></section>
+<ul>
+<li><strong>置信度校准的失败面</strong>：DAIR Emotion 平均置信 0.819、实际 48%、16% 题目正解概率恰为零——校准失准方向是"显得更有把握"，与 history-recall 的 0.90 错答构成同一类风险的两个独立证据（一个 🔬 一个 📚）。</li>
+<li><strong>信号不自足的隐蔽形式</strong>：context 压缩辩论中，state 只给占位符时 256 笔 0 笔保留分 &gt;0.3——不是模型错，是调用方没给内容。与湖北新闻人名案例、ICU 特征缺失案例共同印证核心轴。</li>
+<li><strong>成本立场</strong>：订阅制下边际成本近零时插 Jev 只加延迟；Jev 划算的场景是原本每次判断单独付费调用大模型的场景。</li>
+<li><strong>官方评测的可信度缺陷</strong>：TypeSafe 首发评测参考答案是两个前沿模型回答的平均值，非人工标注（dev.to / Anthony Maio 批评）。</li>
+</ul>
+<h2>四、评估结论："答案无法从输入推导时模型记忆同样靠不住"的证据强度</h2>
+<p><strong>总体判定：方向有真实证据支撑，但证据规模小于文章给读者造成的印象。</strong></p>
+<ol>
+<li><strong>支持证据（仓库内）</strong>：</li>
+<li>history-recall-context 案例 A：0.90 置信答错常识史实题（🔬，唯一的高置信错误事实直接证据）；</li>
+<li>案例 B→C 同题对照：无背景置信 0.07 近打平 → 给背景 0.98 答对，证明给 context 可修正；</li>
+<li>DAIR Emotion：类别重叠（需要超出给定文本的判别）时置信度系统性失准（📚，n=100）；</li>
+<li>湖北新闻：人名-地点关联（外部知识）案例是唯一分歧集中区（📚，生产规模）；</li>
+<li>
+<p>ICU 警报：state 缺判别所需特征时无法补救，虽然这次置信度诚实（0.14-0.51）。</p>
+</li>
+<li>
+<p><strong>削弱因素</strong>：直接证据仅 1 个案例且标准答案本身有算法争议；整套自测 N=3、单领域、出题与判分同一人；"83% vs 60%"的 MMLU-Pro 数字无溯源，不能作为"记忆能力尚可"或"记忆靠不住"任何一方的依据；采样方差使单次收据不可复现（仓库自己承认）。</p>
+</li>
+<li>
+<p><strong>合理的最终表述</strong>：仓库的证据足以支撑<strong>定性</strong>命题——"Jev 的裸记忆不可靠且可能以高置信出错，可靠能力来自 state 内文本的阅读理解；答案不在输入里时应先检索补齐 context，而不是指望模型记得"。文章把这句定性结论与一条无来源的 MMLU-Pro 数字捆绑引用，是超出仓库证据的强化表述；引用时应拆开：定性结论<strong>可证实</strong>（附上述限制），量化对比<strong>不可证实</strong>。</p>
+</li>
+<li>
+<p><strong>对 Jev 能力边界的图谱结论</strong>（仓库自己的归纳，值得采信）：Jev 适合"大量、窄、平行、答案在给定文本内"的判断层；不适合纯知识回忆、类别模糊分类、需全域比较的评分、纯阅读理解（比 LLM 慢贵）、以及不可逆动作的无人监督决策（context 删除案例）。置信度数值"在某些任务上会往过度自信方向失准"，三段式信心门槛的阈值必须在自有数据上重新验证。</p>
+</li>
+</ol></section>
 <section id="04-jevfire"><h1>04 — jevfire（本地 vLLM/WebGPU 并行分类解码）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/kikoncuo/jevfire，commit `5df83b5`（2026-09-18）</li>
+<li>仓库：https://github.com/kikoncuo/jevfire，commit <code>5df83b5</code>（2026-09-18）</li>
 <li>许可证：MIT；无再训练、无第二模型</li>
-<p></p>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>JEVfire 是对 Jev 的独立复现（作者自述受 harshatheg 的 Qwen-2.5-1B-RLCD demo 启发，&quot;Named in tribute to JEV&quot;）。核心思路：**用预训练模型现有的 language-model head 对经验证的单 token 标签打分**，把胜者映射到允许值，JSON 由应用代码拼装——即文章所说的&quot;前向传播 + logits 归一化&quot;路线，零训练。独立决策字段通过 vLLM 批量并行执行，共享 instruction/context 前缀以利用 prefix cache。</p>
-<p></p>
+<p>JEVfire 是对 Jev 的独立复现（作者自述受 harshatheg 的 Qwen-2.5-1B-RLCD demo 启发，"Named in tribute to JEV"）。核心思路：<strong>用预训练模型现有的 language-model head 对经验证的单 token 标签打分</strong>，把胜者映射到允许值，JSON 由应用代码拼装——即文章所说的"前向传播 + logits 归一化"路线，零训练。独立决策字段通过 vLLM 批量并行执行，共享 instruction/context 前缀以利用 prefix cache。</p>
 <h2>技术架构</h2>
-<p></p>
-<li>**CUDA/vLLM 后端**：实测模型 Qwen3.8-27B-FP8，RTX PRO 6000 Blackwell，vLLM 0.29.0；对 vLLM 的 patch 仅改 `sampling_params.py` 一个常量。</li>
-<li>**浏览器后端**：WebLLM + WebGPU，模型为 Qwen3.5-0.8B 的 MLC 转换（Apache 2.0）。</li>
-<li>**结构性保证**：schema 决定键和候选集，模型无法发明字段或集合外的值——但作者明确说明这是结构性保证而非事实正确性保证，模型仍可选错值。</li>
+<ul>
+<li><strong>CUDA/vLLM 后端</strong>：实测模型 Qwen3.8-27B-FP8，RTX PRO 6000 Blackwell，vLLM 0.29.0；对 vLLM 的 patch 仅改 <code>sampling_params.py</code> 一个常量。</li>
+<li><strong>浏览器后端</strong>：WebLLM + WebGPU，模型为 Qwen3.5-0.8B 的 MLC 转换（Apache 2.0）。</li>
+<li><strong>结构性保证</strong>：schema 决定键和候选集，模型无法发明字段或集合外的值——但作者明确说明这是结构性保证而非事实正确性保证，模型仍可选错值。</li>
 <li>三个浏览器实验：Super Mario World 1-1（Qwen + 显式物理守卫的混合结果）、Slipstream 四车并驾、村庄 demo。</li>
-<p></p>
+</ul>
 <h2>性能数据（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>0.8B Qwen + WebGPU，马里奥每步 71.26ms</th><th>README 精确吻合：final-build run 71.26ms mean worker inference、511 accepted choices、40.12s 通关，设备为 Apple M4 Max（非文章暗示的消费级 GPU 场景，且"excludes model download and CPU forecasting"）</th><th>✅ 可证实（有 Measurement receipt）</th></tr>
-<tr><td>比 Jev API 178ms 快、无网络往返</td><td>71ms 为 worker 推理延迟，非整个控制回路延迟；仓库未直接对比 Jev API</td><td>⚠️ 部分可证实，对比系文章推断</td></tr>
-<tr><td>本地方案确定性高</td><td>README 未直接强调确定性，但单 token logits 打分机制上成立</td><td>⚠️ 机制上成立，未做专门实测</td></tr>
-<p></p>
-<p>额外发现（文章未提）：CUDA 侧合成 28 字段任务上，JEVfire 比生成等价约束 JSON 快 **10.29×**（496.9ms vs 5113.1ms，fresh prefix；warm prefix 达 14.77×），基准含 260 请求初始实验 + 2622 请求调参（均为重复 fixture），原始数据发布在 `benchmarks/results/benchmark.json`。</p>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.8B Qwen + WebGPU，马里奥每步 71.26ms</td>
+<td>README 精确吻合：final-build run 71.26ms mean worker inference、511 accepted choices、40.12s 通关，设备为 Apple M4 Max（非文章暗示的消费级 GPU 场景，且"excludes model download and CPU forecasting"）</td>
+<td>✅ 可证实（有 Measurement receipt）</td>
+</tr>
+<tr>
+<td>比 Jev API 178ms 快、无网络往返</td>
+<td>71ms 为 worker 推理延迟，非整个控制回路延迟；仓库未直接对比 Jev API</td>
+<td>⚠️ 部分可证实，对比系文章推断</td>
+</tr>
+<tr>
+<td>本地方案确定性高</td>
+<td>README 未直接强调确定性，但单 token logits 打分机制上成立</td>
+<td>⚠️ 机制上成立，未做专门实测</td>
+</tr>
+</tbody>
+</table>
+<p>额外发现（文章未提）：CUDA 侧合成 28 字段任务上，JEVfire 比生成等价约束 JSON 快 <strong>10.29×</strong>（496.9ms vs 5113.1ms，fresh prefix；warm prefix 达 14.77×），基准含 260 请求初始实验 + 2622 请求调参（均为重复 fixture），原始数据发布在 <code>benchmarks/results/benchmark.json</code>。</p>
 <h2>评估结论</h2>
-<p></p>
-<p>仓库工程质量高（CI、原始基准数据、诚实的局限性披露——如&quot;这是 Qwen+物理守卫的混合结果&quot;、&quot;5 samples/cell 只是初步延迟估计&quot;）。它最有力地验证了文章核心论点：**logits 提取式判断没有任何技术壁垒，且本地并行批量分类在延迟上可以大幅反超**。但需注意 71ms 的适用前提（0.8B 浏览器模型 + 单步决策 + 排除下载/预测开销）与 Jev 的云端 27B 级别能力并非同一量级的比较。</p></section>
+<p>仓库工程质量高（CI、原始基准数据、诚实的局限性披露——如"这是 Qwen+物理守卫的混合结果"、"5 samples/cell 只是初步延迟估计"）。它最有力地验证了文章核心论点：<strong>logits 提取式判断没有任何技术壁垒，且本地并行批量分类在延迟上可以大幅反超</strong>。但需注意 71ms 的适用前提（0.8B 浏览器模型 + 单步决策 + 排除下载/预测开销）与 Jev 的云端 27B 级别能力并非同一量级的比较。</p></section>
 <section id="05-jev-ultrafast"><h1>05 — jev-ultrafast（Browser Use × TypeSafe 官方优化案例）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/browser-use/jev-ultrafast，commit `1231850`（2026-09-18）</li>
-<p></p>
+<li>仓库：https://github.com/browser-use/jev-ultrafast，commit <code>1231850</code>（2026-09-18）</li>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>Browser Use 官方的浏览器 agent 优化项目：**动态索引动作空间**。每步观察生成带标号的控件表（`[3] combobox Where from? · San Francisco`），Jev 在一次请求中同时选择操作（CLICK/TYPE_TEXT/SELECT/SCROLL/WAIT/DONE/BLOCKED）与目标元素（投机式：操作为 CLICK 时只有 click_target 能执行，两个决策一次网络往返）；只有 TYPE_TEXT 才由小 LLM（`inception/mercury-2.5`，关闭推理）生成文本。</p>
-<p></p>
+<p>Browser Use 官方的浏览器 agent 优化项目：<strong>动态索引动作空间</strong>。每步观察生成带标号的控件表（<code>[3] combobox Where from? · San Francisco</code>），Jev 在一次请求中同时选择操作（CLICK/TYPE_TEXT/SELECT/SCROLL/WAIT/DONE/BLOCKED）与目标元素（投机式：操作为 CLICK 时只有 click_target 能执行，两个决策一次网络往返）；只有 TYPE_TEXT 才由小 LLM（<code>inception/mercury-2.5</code>，关闭推理）生成文本。</p>
 <h2>优化点分析</h2>
-<p></p>
-<li>一次快照一次浏览器调用，原子读取可见控件（名称/值/文本），**默认循环无截图**——Jev 消费结构化状态</li>
+<ul>
+<li>一次快照一次浏览器调用，原子读取可见控件（名称/值/文本），<strong>默认循环无截图</strong>——Jev 消费结构化状态</li>
 <li>点击守卫：验证文档、表单值、目标与邻近上下文，拒绝被遮挡控件；动画不再触发重判</li>
 <li>组合框等待可见建议（上限 200ms）；隐藏标签页保持渲染；只发送可见文本</li>
 <li>模型输出永不变成 selector、坐标、shell 命令或可执行 JS</li>
-<p></p>
+</ul>
 <h2>性能数据（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>端到端 9.450s → 7.092s</th><th>`docs/performance.md` matched comparison：6 次交替运行取中位，9.450s vs 7.092s，优化臂 3/3 全胜，任务时间降 25.0%</th><th>✅ 可证实</th></tr>
-<tr><td>交互调用 1092 → 101</td><td>同上：median browser protocol calls 1,092 → 101；TypeSafe 请求 22 → 17</td><td>✅ 可证实</td></tr>
-<tr><td>Jev API 中位延迟 178ms</td><td>录制报告：17 次 Jev 请求中位 178ms</td><td>✅ 可证实</td></tr>
-<tr><td>提速主要来自去除重复 a11y 树扫描</td><td>README"Where the time went"：原循环每次 DOM 突变都作废决策、反复读 a11y 树、解析数百 DOM 节点；新快照一次浏览器调用读完</td><td>✅ 可证实</td></tr>
-<p></p>
-<p>**仓库自己的诚实标注（文章未充分转述）**：三对样本太少，双侧 sign-test p=0.25，&quot;不足以做强统计声明&quot;；对比是受控小样本而非广泛的 agent 基准。</p>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>端到端 9.450s → 7.092s</td>
+<td><code>docs/performance.md</code> matched comparison：6 次交替运行取中位，9.450s vs 7.092s，优化臂 3/3 全胜，任务时间降 25.0%</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>交互调用 1092 → 101</td>
+<td>同上：median browser protocol calls 1,092 → 101；TypeSafe 请求 22 → 17</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>Jev API 中位延迟 178ms</td>
+<td>录制报告：17 次 Jev 请求中位 178ms</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>提速主要来自去除重复 a11y 树扫描</td>
+<td>README"Where the time went"：原循环每次 DOM 突变都作废决策、反复读 a11y 树、解析数百 DOM 节点；新快照一次浏览器调用读完</td>
+<td>✅ 可证实</td>
+</tr>
+</tbody>
+</table>
+<p><strong>仓库自己的诚实标注（文章未充分转述）</strong>：三对样本太少，双侧 sign-test p=0.25，"不足以做强统计声明"；对比是受控小样本而非广泛的 agent 基准。</p>
 <h2>评估结论</h2>
-<p></p>
-<p>这是&quot;架构/表征改造是提速主因&quot;的最佳官方实证：**两臂使用同样的 Jev（jev-1.13.0）和同样的 Mercury 文本模型**，收益全部来自快照与执行层改造（协议调用降 10 倍）。同时也说明 Jev 本身在链路里的贡献是稳定的百毫秒级决策，而非端到端提速的主要来源——支持文章&quot;拿走架构，不带走模型&quot;的结论。</p></section>
+<p>这是"架构/表征改造是提速主因"的最佳官方实证：<strong>两臂使用同样的 Jev（jev-1.13.0）和同样的 Mercury 文本模型</strong>，收益全部来自快照与执行层改造（协议调用降 10 倍）。同时也说明 Jev 本身在链路里的贡献是稳定的百毫秒级决策，而非端到端提速的主要来源——支持文章"拿走架构，不带走模型"的结论。</p></section>
 <section id="06-jev-demos"><h1>06 — jev-demos（迷宫寻路一致性实测）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/Bud-ro/jev-demos，commit `37470f9`（2026-09-17）</li>
-<li>技术栈：Dart；`packages/jev_common`（API shim + 结果录制）、`packages/maze_lookahead`（空间推理/前瞻测试）</li>
-<p></p>
+<li>仓库：https://github.com/Bud-ro/jev-demos，commit <code>37470f9</code>（2026-09-17）</li>
+<li>技术栈：Dart；<code>packages/jev_common</code>（API shim + 结果录制）、<code>packages/maze_lookahead</code>（空间推理/前瞻测试）</li>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>作者（Bud-ro）用 TypeSafe System One 模型测迷宫求解，重点是**同时移动（simultaneous move making）**：一次请求问接下来的 N 步，任何回退/撞墙/踩到 G 后离开都判失败；并测试只执行前 M 步决策时的表现。</p>
-<p></p>
+<p>作者（Bud-ro）用 TypeSafe System One 模型测迷宫求解，重点是<strong>同时移动（simultaneous move making）</strong>：一次请求问接下来的 N 步，任何回退/撞墙/踩到 G 后离开都判失败；并测试只执行前 M 步决策时的表现。</p>
 <h2>一致性发现（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>重复相同请求无法稳定得到相同答案</th><th>maze_lookahead README 原文："Identical requests do not always get identical answers"</th><th>✅ 可证实</th></tr>
-<tr><td>多次运行下迷宫求解率归零</td><td>quick preset（10 个 5×5 到 2 个 100×100 迷宫、每请求 100 步问题）下 `#` 墙和 `█` 墙迷宫**均解出 0 个**</td><td>✅ 可证实（原文用词为"solved zero mazes"，文章的"求解率归零"属实但语境是特定 preset）</td></tr>
-<tr><td>（文章引申）与本地 logits 方案确定性对比</td><td>仓库未直接做本地 logits 对照；但引用了 vllm#57250 的 "Jev at home" DiffusionGemma structured-read demo：同一风格 5×5 迷宫无邻接提示、每步一次读取、20 步最优走到 G</td><td>⚠️ 间接证据</td></tr>
-<p></p>
-<p>其他量化发现（文章未提）：计划呈&quot;右→下→NONE&quot;的直线倾向，下一步准确率仅 35–46%，从不回答 UP；**告知四邻格子内容可完全消除撞墙**，加上单步问题后 5×5 迷宫解出 6/10（4 个走最优路径），失败模式均为岔路口转错后在死胡同振荡。原始数据在 `results/`。</p>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>重复相同请求无法稳定得到相同答案</td>
+<td>maze_lookahead README 原文："Identical requests do not always get identical answers"</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>多次运行下迷宫求解率归零</td>
+<td>quick preset（10 个 5×5 到 2 个 100×100 迷宫、每请求 100 步问题）下 <code>#</code> 墙和 <code>█</code> 墙迷宫<strong>均解出 0 个</strong></td>
+<td>✅ 可证实（原文用词为"solved zero mazes"，文章的"求解率归零"属实但语境是特定 preset）</td>
+</tr>
+<tr>
+<td>（文章引申）与本地 logits 方案确定性对比</td>
+<td>仓库未直接做本地 logits 对照；但引用了 vllm#57250 的 "Jev at home" DiffusionGemma structured-read demo：同一风格 5×5 迷宫无邻接提示、每步一次读取、20 步最优走到 G</td>
+<td>⚠️ 间接证据</td>
+</tr>
+</tbody>
+</table>
+<p>其他量化发现（文章未提）：计划呈"右→下→NONE"的直线倾向，下一步准确率仅 35–46%，从不回答 UP；<strong>告知四邻格子内容可完全消除撞墙</strong>，加上单步问题后 5×5 迷宫解出 6/10（4 个走最优路径），失败模式均为岔路口转错后在死胡同振荡。原始数据在 <code>results/</code>。</p>
 <h2>评估结论</h2>
-<p></p>
-<p>一致性缺陷证据扎实且是仓库第一手观察；&quot;求解率归零&quot;成立但需注意是长视野（100 步计划）+ 大迷宫的 quick preset，小迷宫 + 邻接提示下成功率显著回升——与 02 号报告（jev-behavior-study）的&quot;输入表征杠杆&quot;结论互相印证。对生产系统的启示：**长视野多步空间规划不该交给判断模型**，且概率抖动要求下游必须设置置信度缓冲带（与官方 0.30–0.70 转人工的建议一致）。</p></section>
+<p>一致性缺陷证据扎实且是仓库第一手观察；"求解率归零"成立但需注意是长视野（100 步计划）+ 大迷宫的 quick preset，小迷宫 + 邻接提示下成功率显著回升——与 02 号报告（jev-behavior-study）的"输入表征杠杆"结论互相印证。对生产系统的启示：<strong>长视野多步空间规划不该交给判断模型</strong>，且概率抖动要求下游必须设置置信度缓冲带（与官方 0.30–0.70 转人工的建议一致）。</p></section>
 <section id="07-jev-phishing-bench"><h1>07 — jev-phishing-bench（钓鱼邮件判定基准：Jev vs LLM）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/anisselbd/jev-phishing-bench，commit `1d56e8c`（2026-09-17）</li>
+<li>仓库：https://github.com/anisselbd/jev-phishing-bench，commit <code>1d56e8c</code>（2026-09-17）</li>
 <li>数据集：PhishNChips v5.2（2026-04），2000 封（1000 钓鱼 + 1000 合法，含 333 个跨域误报陷阱）</li>
-<p></p>
+</ul>
 <h2>概述</h2>
-<p></p>
 <p>公开可复现的安全决策基准：邮件 agent 是否该点击邮件里的链接。Jev（jev-1.13.0）与 Claude Haiku 4.5 在同样的 2000 封邮件、同一种子顺序、每封一次调用下对比准确率、召回、AUROC、校准（ECE/Brier）、延迟、成本与概率稳定性；所有比例带 95% Wilson 区间，准确率差用配对 McNemar 检验。</p>
-<p></p>
 <h2>关键数据（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>专用分类器 81.3% vs 零样本判断模型 62.6%</th><th>**实际是 Claude Haiku 4.5（通用 LLM）81.3% vs Jev 62.6%**，并非"专用分类器"；81.3% 是通用对话模型在 balanced 系统提示词下的成绩</th><th>❌ **文章失真**：对比对象被错标。但"81.3% vs 62.6%"两个数字本身真实</th></tr>
-<tr><td>结论：标签固定+样本充足时专用分类器更有优势</td><td>仓库结论更微妙：Jev 的最佳单信号（sig_free_hosting≥0.70）89.4%，**低于两行正则规则的 91.8%**（p=0.003）；但对 Jev 五信号做逻辑回归达 95.0%，统计上追平 Haiku 信号的回归（95.0% vs 93.2%，p=0.063）</td><td>⚠️ 文章结论方向对（零样本判断不够），但论据错位</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>专用分类器 81.3% vs 零样本判断模型 62.6%</td>
+<td><strong>实际是 Claude Haiku 4.5（通用 LLM）81.3% vs Jev 62.6%</strong>，并非"专用分类器"；81.3% 是通用对话模型在 balanced 系统提示词下的成绩</td>
+<td>❌ <strong>文章失真</strong>：对比对象被错标。但"81.3% vs 62.6%"两个数字本身真实</td>
+</tr>
+<tr>
+<td>结论：标签固定+样本充足时专用分类器更有优势</td>
+<td>仓库结论更微妙：Jev 的最佳单信号（sig_free_hosting≥0.70）89.4%，<strong>低于两行正则规则的 91.8%</strong>（p=0.003）；但对 Jev 五信号做逻辑回归达 95.0%，统计上追平 Haiku 信号的回归（95.0% vs 93.2%，p=0.063）</td>
+<td>⚠️ 文章结论方向对（零样本判断不够），但论据错位</td>
+</tr>
+</tbody>
+</table>
 <p>其他重要发现（文章未提）：</p>
-<p></p>
+<ul>
 <li>Jev 钓鱼召回仅 43.2%（Haiku 76.4%），AUROC 0.689 vs 0.837，ECE 0.154 vs 0.097</li>
-<li>**稳定性**：两次通过之间 Jev 2.2% 标签翻转（mean abs diff 0.017），200 封 12 小时后 1.0% 翻转；Haiku 300 封 0.7% 翻转</li>
+<li><strong>稳定性</strong>：两次通过之间 Jev 2.2% 标签翻转（mean abs diff 0.017），200 封 12 小时后 1.0% 翻转；Haiku 300 封 0.7% 翻转</li>
 <li>Jev 胜在便宜快：$0.038 vs $0.462 /千封（约 12×），p50 239ms vs 687ms；信号分解更是便宜约 27×、快 5×</li>
 <li>方法学严谨（公开数据集后置于模型训练截止、程序化验证、非 AI 基线对照、A/B split）</li>
-<p></p>
+</ul>
 <h2>评估结论</h2>
-<p></p>
-<p>这是 9 个仓库中方法学最严谨的一个，且**直接证伪了文章的转述**：所谓&quot;专用分类器 81.3%&quot;实为通用 LLM。仓库的真实教训比文章更尖锐：零样本判断模型在安全决策上既输给通用 LLM 也输给两行正则；它的价值只在&quot;便宜地提供可回归的中间信号&quot;。使用本文数据时应以仓库为准。</p></section>
+<p>这是 9 个仓库中方法学最严谨的一个，且<strong>直接证伪了文章的转述</strong>：所谓"专用分类器 81.3%"实为通用 LLM。仓库的真实教训比文章更尖锐：零样本判断模型在安全决策上既输给通用 LLM 也输给两行正则；它的价值只在"便宜地提供可回归的中间信号"。使用本文数据时应以仓库为准。</p></section>
 <section id="08-windtunnel"><h1>08 — WindTunnel（WebMCP 表征基准：感知/判断解耦）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/nekuda-ai/WindTunnel，commit `5ca8644`（2026-09-18）</li>
+<li>仓库：https://github.com/nekuda-ai/WindTunnel，commit <code>5ca8644</code>（2026-09-18）</li>
 <li>许可证：Apache-2.0；基于 W3C WebMCP 规范（webmachinelearning/webmcp）</li>
-<p></p>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>基准仓库，比较浏览器 agent 操作网站的三/四种接口：截图（computer use）、页面结构（DOM/a11y 树）、代码执行（Playwright）、**WebMCP**（网站直接暴露 `add_to_cart(id)`、`book_slot(time)` 等工具调用）。规模：21 配置 × 49 任务 × 8 站点 × 3 次 = 3,087 attempt 行、1,029 多数裁决，600s/次上限（canonical board v1.2，2026-09-18）。</p>
-<p></p>
+<p>基准仓库，比较浏览器 agent 操作网站的三/四种接口：截图（computer use）、页面结构（DOM/a11y 树）、代码执行（Playwright）、<strong>WebMCP</strong>（网站直接暴露 <code>add_to_cart(id)</code>、<code>book_slot(time)</code> 等工具调用）。规模：21 配置 × 49 任务 × 8 站点 × 3 次 = 3,087 attempt 行、1,029 多数裁决，600s/次上限（canonical board v1.2，2026-09-18）。</p>
 <h2>架构分析</h2>
-<p></p>
-<p>WebMCP 是&quot;网站自己提供语义化动作&quot;的表征方案——agent 不再解析像素或 DOM，而是调用站点声明的能力。各 method（`arms/`）+ 模型组合成 21 个配置；多数裁决 + 负控站点（不该行动时只能回答）+ outcome probe（只读探查真实状态判定成败）+ perturbation（改名按钮/弹窗等对抗扰动，单独报告）。</p>
-<p></p>
+<p>WebMCP 是"网站自己提供语义化动作"的表征方案——agent 不再解析像素或 DOM，而是调用站点声明的能力。各 method（<code>arms/</code>）+ 模型组合成 21 个配置；多数裁决 + 负控站点（不该行动时只能回答）+ outcome probe（只读探查真实状态判定成败）+ perturbation（改名按钮/弹窗等对抗扰动，单独报告）。</p>
 <h2>基准数据（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据</th><th>判定</th></tr>
-<tr><th>同一模型原始 DOM 表 25/49（中位 5.4s），换 WebMCP 后 49/49（中位 3.2s）</th><th>README："New: Jev + Mercury 2.5 solves **49/49 tasks with WebMCP** and **25/49 with ultrafast DOM controls**"；WebMCP 对该组合 1.7× 更快</th><th>⚠️ 完成率数字 ✅ 可证实；5.4s/3.2s 中位耗时未在 README 出现（或在 results/ 明细中），1.7× 与之方向一致</th></tr>
-<tr><td>表征改造拉开 44 个百分点，远超模型间 3.8 个百分点</td><td>49-25=24 个百分点（25/49≈51%→100%），文章的"44 个百分点"系错误换算</td><td>❌ **数字有误**（实际 +24pp），但"表征差距 >> 模型差距"的定性结论成立</td></tr>
-<tr><td>表征改造是头号功臣属工程推断、无消融实验</td><td>仓库未提供"同表征下换判断模型"的隔离消融；且 9 个 WebMCP 配置 + GPT-6 Astra 代码执行均满分 49/49，"任务解出率"上 WebMCP 与最强截图方案打平，**区分度来自成本与时间**（3–47× 便宜、2.5–7.5× 快）</td><td>✅ 消融缺口属实；文章的"44pp 成功率跃升"表述夸大了</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同一模型原始 DOM 表 25/49（中位 5.4s），换 WebMCP 后 49/49（中位 3.2s）</td>
+<td>README："New: Jev + Mercury 2.5 solves <strong>49/49 tasks with WebMCP</strong> and <strong>25/49 with ultrafast DOM controls</strong>"；WebMCP 对该组合 1.7× 更快</td>
+<td>⚠️ 完成率数字 ✅ 可证实；5.4s/3.2s 中位耗时未在 README 出现（或在 results/ 明细中），1.7× 与之方向一致</td>
+</tr>
+<tr>
+<td>表征改造拉开 44 个百分点，远超模型间 3.8 个百分点</td>
+<td>49-25=24 个百分点（25/49≈51%→100%），文章的"44 个百分点"系错误换算</td>
+<td>❌ <strong>数字有误</strong>（实际 +24pp），但"表征差距 &gt;&gt; 模型差距"的定性结论成立</td>
+</tr>
+<tr>
+<td>表征改造是头号功臣属工程推断、无消融实验</td>
+<td>仓库未提供"同表征下换判断模型"的隔离消融；且 9 个 WebMCP 配置 + GPT-6 Astra 代码执行均满分 49/49，"任务解出率"上 WebMCP 与最强截图方案打平，<strong>区分度来自成本与时间</strong>（3–47× 便宜、2.5–7.5× 快）</td>
+<td>✅ 消融缺口属实；文章的"44pp 成功率跃升"表述夸大了</td>
+</tr>
+</tbody>
+</table>
 <p>另注意：GPT-6 Astra 代码执行总成本 $35.53 vs 原生 WebMCP $3.33（10.7×），中位时间 16.4s vs 6.3s。</p>
-<p></p>
 <h2>评估结论</h2>
-<p></p>
-<p>WindTunnel 证实&quot;感知/判断解耦 + 表征改造&quot;能带来数量级的成本/时间收益，但文章两处转述失真（44pp 应为约 24pp；成功率上 WebMCP 并未独占满分）。更准确的版本是：**在满分俱乐部内部，接口表征决定的是成本与速度，而非成功率**。文章提醒的消融缺口确实存在——&quot;表征 vs 判断模型谁更重要&quot;尚无隔离实验。</p></section>
+<p>WindTunnel 证实"感知/判断解耦 + 表征改造"能带来数量级的成本/时间收益，但文章两处转述失真（44pp 应为约 24pp；成功率上 WebMCP 并未独占满分）。更准确的版本是：<strong>在满分俱乐部内部，接口表征决定的是成本与速度，而非成功率</strong>。文章提醒的消融缺口确实存在——"表征 vs 判断模型谁更重要"尚无隔离实验。</p></section>
 <section id="09-jev-browser"><h1>09 — jev-browser（Jev 驱动的浏览器 MCP 服务器）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>仓库：https://github.com/MahmoudAdelbghany/jev-browser，commit `20c27dd`（2026-09-17）</li>
-<li>技术栈：Node ≥20 + Playwright；Jev `jev-1.13.0`；驱动模型 `auto/best-coding` via Claude Code 2.1.245</li>
-<p></p>
+<li>仓库：https://github.com/MahmoudAdelbghany/jev-browser，commit <code>20c27dd</code>（2026-09-17）</li>
+<li>技术栈：Node ≥20 + Playwright；Jev <code>jev-1.13.0</code>；驱动模型 <code>auto/best-coding</code> via Claude Code 2.1.245</li>
+</ul>
 <h2>概述</h2>
-<p></p>
-<p>把 Jev 包装成浏览器 MCP 服务器给 LLM agent 用：一次 `page.evaluate` 快照（2–25ms）→ 本地按目标词重叠排序的紧凑候选列表 → **一次 Jev 并行调用**（~300ms，零 LLM token）同时决定 action、element、key、字段↔文本绑定、上步验证（prev_ok）、完成检测（goal_achieved）→ CDP 执行 → 确定性状态 diff 验证；低置信/卡死/循环时升级给 LLM（escalation contract）。</p>
-<p></p>
+<p>把 Jev 包装成浏览器 MCP 服务器给 LLM agent 用：一次 <code>page.evaluate</code> 快照（2–25ms）→ 本地按目标词重叠排序的紧凑候选列表 → <strong>一次 Jev 并行调用</strong>（~300ms，零 LLM token）同时决定 action、element、key、字段↔文本绑定、上步验证（prev_ok）、完成检测（goal_achieved）→ CDP 执行 → 确定性状态 diff 验证；低置信/卡死/循环时升级给 LLM（escalation contract）。</p>
 <h2>基准数据（文章声称 vs 仓库实际证据）</h2>
-<p></p>
-<tr><th>文章声称</th><th>仓库证据（RESULTS.md，2026-09-17）</th><th>判定</th></tr>
-<tr><th>单任务中位 1.8s</th><th>jev-only 栈 12 任务（jev-only n=3 共 33 轮）avg wall/task p50 **1.8s**</th><th>✅ 可证实</th></tr>
-<tr><td>成本约 $0.0005/任务</td><td>$0.017/33 轮 ≈ $0.0005</td><td>✅ 可证实</td></tr>
-<tr><td>完成率 97%</td><td>32/33 = 97%</td><td>✅ 可证实</td></tr>
-<tr><td>（文章未强调）与 LLM agent 对比</td><td>vs Claude+Playwright MCP：~10× 快、~100× 便宜、同套件 97% vs 100%；同驱动下 claude-jev 比 claude-playwright 快 1.5×、省 1.6×、同为 12/12</td><td>✅ 补充</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th>文章声称</th>
+<th>仓库证据（RESULTS.md，2026-09-17）</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单任务中位 1.8s</td>
+<td>jev-only 栈 12 任务（jev-only n=3 共 33 轮）avg wall/task p50 <strong>1.8s</strong></td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>成本约 $0.0005/任务</td>
+<td>$0.017/33 轮 ≈ $0.0005</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>完成率 97%</td>
+<td>32/33 = 97%</td>
+<td>✅ 可证实</td>
+</tr>
+<tr>
+<td>（文章未强调）与 LLM agent 对比</td>
+<td>vs Claude+Playwright MCP：~10× 快、~100× 便宜、同套件 97% vs 100%；同驱动下 claude-jev 比 claude-playwright 快 1.5×、省 1.6×、同为 12/12</td>
+<td>✅ 补充</td>
+</tr>
+</tbody>
+</table>
 <p>设计细节：类型化 ref 使 Jev 无法幻觉出不存在的动作（非法组合纠正性重问一次）；确定性验证覆盖 Jev 的弱信号；置信度分层策略（可逆动作 0.3、其余 0.5）把成功率从 94% 提到 97%。</p>
-<p></p>
 <h2>局限（仓库自述）</h2>
-<p></p>
+<ul>
 <li>Claude 两栈 n=1（成本预算），比例仅方向性参考；本地确定性任务为主，仅 2 个 Wikipedia 实网任务</li>
 <li>Jev 单独会败于回溯类任务（t03 需导航返回），靠升级路径恢复——这是设计内行为</li>
-<li>纯阅读抽取任务（l02）Jev 反而更慢更贵：大页面状态推给 Jev 的输入成本高于 LLM 自己读快照 → &quot;读和答&quot;归 LLM，&quot;在页面上行动&quot;归 Jev</li>
-<p></p>
+<li>纯阅读抽取任务（l02）Jev 反而更慢更贵：大页面状态推给 Jev 的输入成本高于 LLM 自己读快照 → "读和答"归 LLM，"在页面上行动"归 Jev</li>
+</ul>
 <h2>评估结论</h2>
-<p></p>
-<p>三个数字全部在仓库中可证实，且仓库提供了复现命令（`node bench/compare.mjs ...`）与程序化验证（服务端随机 8 位码防 LLM 裁判偏置），方法学可信。它给出文章结论最干净的工程佐证：**判断模型 + 确定性验证 + 升级契约**的组合可以在窄域任务上以 1/100 成本逼近 LLM agent，同时明确划出了判断模型的能力边界（回溯、纯阅读）。</p></section>
+<p>三个数字全部在仓库中可证实，且仓库提供了复现命令（<code>node bench/compare.mjs ...</code>）与程序化验证（服务端随机 8 位码防 LLM 裁判偏置），方法学可信。它给出文章结论最干净的工程佐证：<strong>判断模型 + 确定性验证 + 升级契约</strong>的组合可以在窄域任务上以 1/100 成本逼近 LLM agent，同时明确划出了判断模型的能力边界（回溯、纯阅读）。</p></section>
 <section id="10-kev-nimble-training"><h1>10 — Kev 与 Bespoke Nimble：训练方法与数据集（自研微调参考）</h1>
-<p></p>
+<ul>
 <li>研究日期：2026-09-20</li>
-<li>信息源：微信公众号文章《JEV：一个只会说「选A、打3分、是」的AI模型爆了，48小时炸出14个项目》（存档 `01-raw/wx-jev-kev-nimble-202609.md`）+ 两仓库一手核验</li>
-<li>仓库：nimble `35fe1f4`（2026-09-19）、kev `20fa626`（2026-09-19）</li>
-<li>**定位：本报告侧重&quot;我们以后做自己的微调决策模型时能直接抄什么&quot;**</li>
-<p></p>
+<li>信息源：微信公众号文章《JEV：一个只会说「选A、打3分、是」的AI模型爆了，48小时炸出14个项目》（存档 <code>01-raw/wx-jev-kev-nimble-202609.md</code>）+ 两仓库一手核验</li>
+<li>仓库：nimble <code>35fe1f4</code>（2026-09-19）、kev <code>20fa626</code>（2026-09-19）</li>
+<li><strong>定位：本报告侧重"我们以后做自己的微调决策模型时能直接抄什么"</strong></li>
+</ul>
 <h2>一、两条微调路线速览</h2>
-<p></p>
-<tr><th></th><th>Bespoke Nimble</th><th>Kev (Jared Palmer)</th></tr>
-<tr><th>基座</th><th>Qwen3.5-9B</th><th>Qwen2.5/Qwen3 0.5B–8B（推荐 4B）</th></tr>
-<tr><td>方法</td><td>LoRA（rank 16）+ 答案 token 交叉熵</td><td>LoRA（r=16）+ 从零训练的 pointer readout head（0.46M）</td></tr>
-<tr><td>可训参数</td><td>LoRA 适配器</td><td>9.3M（占 backbone 1.9%）</td></tr>
-<tr><td>训练数据</td><td>2,676 条对比对（10 领域）</td><td>10–13 个公开源 ×1,000 条 + 2×448 条程序化策略对（decision-v4/v6 suite）</td></tr>
-<tr><td>关键超参</td><td>lr 5e-5、effective batch 8、1 epoch、BF16、seed 17、2,048 token 限长</td><td>lr **5e-5**（最大单项改进）、2 epochs、batch 4×accum 2、bf16 autocast</td></tr>
-<tr><td>成本</td><td>调参 L40S、终训 H100</td><td>kev-4b 单 H100 ~40 分钟；0.5B 试验 $0.15–0.30；M5 笔记本 0.06 度电</td></tr>
-<tr><td>成绩</td><td>324 held-out 90.12%（Jev 93.21%，基座 66.36%，Qwen3.8-27B 84.88%）</td><td>OOD：kev-4b 0.79 / kev-8b 0.80（Jev 0.86）</td></tr>
-<tr><td>许可</td><td>Apache 2.0（数据/权重/配方/推理全公开）</td><td>开源 + HF 集合</td></tr>
-<p></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Bespoke Nimble</th>
+<th>Kev (Jared Palmer)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基座</td>
+<td>Qwen3.5-9B</td>
+<td>Qwen2.5/Qwen3 0.5B–8B（推荐 4B）</td>
+</tr>
+<tr>
+<td>方法</td>
+<td>LoRA（rank 16）+ 答案 token 交叉熵</td>
+<td>LoRA（r=16）+ 从零训练的 pointer readout head（0.46M）</td>
+</tr>
+<tr>
+<td>可训参数</td>
+<td>LoRA 适配器</td>
+<td>9.3M（占 backbone 1.9%）</td>
+</tr>
+<tr>
+<td>训练数据</td>
+<td>2,676 条对比对（10 领域）</td>
+<td>10–13 个公开源 ×1,000 条 + 2×448 条程序化策略对（decision-v4/v6 suite）</td>
+</tr>
+<tr>
+<td>关键超参</td>
+<td>lr 5e-5、effective batch 8、1 epoch、BF16、seed 17、2,048 token 限长</td>
+<td>lr <strong>5e-5</strong>（最大单项改进）、2 epochs、batch 4×accum 2、bf16 autocast</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>调参 L40S、终训 H100</td>
+<td>kev-4b 单 H100 ~40 分钟；0.5B 试验 $0.15–0.30；M5 笔记本 0.06 度电</td>
+</tr>
+<tr>
+<td>成绩</td>
+<td>324 held-out 90.12%（Jev 93.21%，基座 66.36%，Qwen3.8-27B 84.88%）</td>
+<td>OOD：kev-4b 0.79 / kev-8b 0.80（Jev 0.86）</td>
+</tr>
+<tr>
+<td>许可</td>
+<td>Apache 2.0（数据/权重/配方/推理全公开）</td>
+<td>开源 + HF 集合</td>
+</tr>
+</tbody>
+</table>
 <h2>二、Nimble：contrastive data curation（最值得抄的数据方法）</h2>
-<p></p>
-<p>**核心思想**：没有 teacher 概率可蒸馏，就构造**最小对比对（minimal pairs）**——两条样本几乎完全相同，只改一个关键事实使正确答案翻转，标签是硬的（对/错）。模型被迫学会&quot;哪条证据才应该改变决策&quot;，从而把 logits 校准到可用。</p>
-<p></p>
-<li>文中例子：规则&quot;只有 Mira 可授权账户 42 退款&quot;；对比对只把签名人 Mira→Noah，答案 true→false，其余文本（问题、政策）逐字相同</li>
-<li>**无需人工标注概率、无需蒸馏**；训练目标是 allowed candidate logits 上的交叉熵（直接学类型化决策）</li>
-<li>仓库明确：&quot;只拿 Jev 评估，不用 Jev 输出&quot;；保存的 Jev 概率仅留作未来 soft-target 蒸馏的选项</li>
-<li>数据集：`data/train.jsonl` 2,826 条（发布模型用 2,676）/ `data/eval.jsonl` 324 条（仅终评）。覆盖 Commerce、Education、Media、Public Services、Supply Chain、Travel、Workplace 等 10 领域</li>
+<p><strong>核心思想</strong>：没有 teacher 概率可蒸馏，就构造<strong>最小对比对（minimal pairs）</strong>——两条样本几乎完全相同，只改一个关键事实使正确答案翻转，标签是硬的（对/错）。模型被迫学会"哪条证据才应该改变决策"，从而把 logits 校准到可用。</p>
+<ul>
+<li>文中例子：规则"只有 Mira 可授权账户 42 退款"；对比对只把签名人 Mira→Noah，答案 true→false，其余文本（问题、政策）逐字相同</li>
+<li><strong>无需人工标注概率、无需蒸馏</strong>；训练目标是 allowed candidate logits 上的交叉熵（直接学类型化决策）</li>
+<li>仓库明确："只拿 Jev 评估，不用 Jev 输出"；保存的 Jev 概率仅留作未来 soft-target 蒸馏的选项</li>
+<li>数据集：<code>data/train.jsonl</code> 2,826 条（发布模型用 2,676）/ <code>data/eval.jsonl</code> 324 条（仅终评）。覆盖 Commerce、Education、Media、Public Services、Supply Chain、Travel、Workplace 等 10 领域</li>
 <li>题型分布（训练/holdout）：Choice 1,244/260、Noul（布尔）500/0、Score 932/64</li>
-<li>**标签全部是合成且由模型自查、无人复核**——同模型多次调用可能犯同样的错，作者自己承认此局限</li>
-<p></p>
-<h2>三、Kev：架构隔离与&quot;学习率保知识&quot;</h2>
-<p></p>
-<li>**单次 prefill 多问题**：state 编码一次，多个 question 经 block-causal mask 并行独立推理（问题间互相不可见，隔离性验证到 4e-6 精度）；pointer head 对每个问题的 decide token × option token 打分后 softmax</li>
-<li>**训练/推理同一 renderer**：线上请求与训练数据走同一格式管线，推理不会遇到训练没见过的格式</li>
-<li>**学习率是保住基座能力的关键**：默认 2e-4 会把基座知识&quot;训没&quot;，降到 **5e-5** 保住大部分——这类微调不是学新知识，而是教模型&quot;用&quot;已有能力做决策（低漂移旋钮 lora_targets/head_lr/weight_decay 均不敌 lr 5e-5）</li>
-<li>数据来源：公开数据集转 TypeSafe 形状（Banking77、AG News、MNLI、BoolQ、SST-5、Yelp 等）+ 程序化 policy pairs，冻结为带校验和的 suite（`evals/`）</li>
-<li>可选数据增强：`--p_none_pair`（部分 Choice 记录附加 none-of-the-above 最小对）；`--option_isolation`（选项隔离子分支，置换不变但 4B 上损精度）</li>
+<li><strong>标签全部是合成且由模型自查、无人复核</strong>——同模型多次调用可能犯同样的错，作者自己承认此局限</li>
+</ul>
+<h2>三、Kev：架构隔离与"学习率保知识"</h2>
+<ul>
+<li><strong>单次 prefill 多问题</strong>：state 编码一次，多个 question 经 block-causal mask 并行独立推理（问题间互相不可见，隔离性验证到 4e-6 精度）；pointer head 对每个问题的 decide token × option token 打分后 softmax</li>
+<li><strong>训练/推理同一 renderer</strong>：线上请求与训练数据走同一格式管线，推理不会遇到训练没见过的格式</li>
+<li><strong>学习率是保住基座能力的关键</strong>：默认 2e-4 会把基座知识"训没"，降到 <strong>5e-5</strong> 保住大部分——这类微调不是学新知识，而是教模型"用"已有能力做决策（低漂移旋钮 lora_targets/head_lr/weight_decay 均不敌 lr 5e-5）</li>
+<li>数据来源：公开数据集转 TypeSafe 形状（Banking77、AG News、MNLI、BoolQ、SST-5、Yelp 等）+ 程序化 policy pairs，冻结为带校验和的 suite（<code>evals/</code>）</li>
+<li>可选数据增强：<code>--p_none_pair</code>（部分 Choice 记录附加 none-of-the-above 最小对）；<code>--option_isolation</code>（选项隔离子分支，置换不变但 4B 上损精度）</li>
 <li>严谨性：每个 trial 记录 git commit、suite hash、代码 hash，不一致拒绝运行；训练 TF32/bf16、评估 fp32-exact（TF32 本身就会移动概率 ~1e-3）</li>
-<p></p>
+</ul>
 <h2>四、两文互相印证的结论</h2>
-<p></p>
-<p>1. **无需蒸馏、无需秘密配方**：LoRA + 答案 token 交叉熵 + 硬标签即可逼近 Jev（差 ~3pp）</p>
-<p>2. **lr 5e-5 是两个项目共同的甜点**（Kev 的最大单项发现；Nimble 终选配方同为 5e-5）</p>
-<p>3. 数据质量杠杆在**对比结构**（翻转关键事实）而非数据量——2,676 条就够把 9B 从 66% 拉到 90%</p>
-<p></p>
+<ol>
+<li><strong>无需蒸馏、无需秘密配方</strong>：LoRA + 答案 token 交叉熵 + 硬标签即可逼近 Jev（差 ~3pp）</li>
+<li><strong>lr 5e-5 是两个项目共同的甜点</strong>（Kev 的最大单项发现；Nimble 终选配方同为 5e-5）</li>
+<li>数据质量杠杆在<strong>对比结构</strong>（翻转关键事实）而非数据量——2,676 条就够把 9B 从 66% 拉到 90%</li>
+</ol>
 <h2>五、局限（做自研模型时要避的坑）</h2>
-<p></p>
-<li>Nimble 测试仅 324 条/162 对/6 领域，作者自认&quot;换测试可能远不如 Jev&quot;；单一 held-out 高分易掩盖线上风险，应补**校准曲线与分布外测试**（评论区共识）</li>
-<li>Kev OOD 差 Jev 6–7pp，短板集中在知识题（MMLU 0.69–0.75 vs 0.90）和日期算术——**基座缺的知识微调补不回来**</li>
+<ul>
+<li>Nimble 测试仅 324 条/162 对/6 领域，作者自认"换测试可能远不如 Jev"；单一 held-out 高分易掩盖线上风险，应补<strong>校准曲线与分布外测试</strong>（评论区共识）</li>
+<li>Kev OOD 差 Jev 6–7pp，短板集中在知识题（MMLU 0.69–0.75 vs 0.90）和日期算术——<strong>基座缺的知识微调补不回来</strong></li>
 <li>合成标签自查有系统性盲区；Nimble holdout 的 Noul=0（布尔判断无 held-out 覆盖）</li>
-<p></p>
+</ul>
 <h2>六、对我们的可执行参考（GB10 自研微调）</h2>
-<p></p>
-<p>1. **数据**：优先复刻 contrastive data curation——按业务写策略/规则文本，程序化生成最小对比对（改一个字段翻转标签），题型覆盖 Choice/Noul/Score 三类</p>
-<p>2. **配方起点**：LoRA r=16、lr 5e-5、1–2 epochs、BF16、答案 token 交叉熵；单卡即可（kev-4b 一张 H100 40 分钟量级，GB10 上 4B 级基座可试）</p>
-<p>3. **基座**：知识类任务别指望微调补；选带足够 MMLU 的基座（4B–9B 档），体积优先则 Kev 路线（readout head + block-causal 多问题）</p>
-<p>4. **评测**：冻结 held-out suite + 校准曲线（ECE/可靠性图）+ OOD 集，别只看单一准确率</p>
-<p>5. 参考实现：`repos/nimble/data/`（现成 2,826+324 条样例数据）、`repos/kev/kev/{contrastive,data,train}.py`（对比对生成与训练循环）</p></section>
+<ol>
+<li><strong>数据</strong>：优先复刻 contrastive data curation——按业务写策略/规则文本，程序化生成最小对比对（改一个字段翻转标签），题型覆盖 Choice/Noul/Score 三类</li>
+<li><strong>配方起点</strong>：LoRA r=16、lr 5e-5、1–2 epochs、BF16、答案 token 交叉熵；单卡即可（kev-4b 一张 H100 40 分钟量级，GB10 上 4B 级基座可试）</li>
+<li><strong>基座</strong>：知识类任务别指望微调补；选带足够 MMLU 的基座（4B–9B 档），体积优先则 Kev 路线（readout head + block-causal 多问题）</li>
+<li><strong>评测</strong>：冻结 held-out suite + 校准曲线（ECE/可靠性图）+ OOD 集，别只看单一准确率</li>
+<li>参考实现：<code>repos/nimble/data/</code>（现成 2,826+324 条样例数据）、<code>repos/kev/kev/{contrastive,data,train}.py</code>（对比对生成与训练循环）</li>
+</ol></section>
+<section id="12-jev-engineering-pdf"><h1>12 — 《Jev Engineering for Coding Agents》PDF 解读</h1>
+<ul>
+<li>研究日期:2026-09-22</li>
+<li>对象:12 页设计笔记综述《Jev Engineering for Coding Agents》(基于 TypeSafe 创始人 Diogo Almeida 的设计笔记,"独立编译",2026-09)</li>
+<li>原文:<a href="assets/12-jev-engineering-pdf/jev-engineering-for-coding-agents.pdf"><code>assets/12-jev-engineering-pdf/jev-engineering-for-coding-agents.pdf</code></a> · <a href="https://drive.google.com/file/d/17h982xvsL3E7b80iGmOCfKp9qTOW9ohv/view">Google Drive 源</a> · 逐页截图见同目录 <code>page-01..12.png</code></li>
+<li>交互式可视化(路由算术计算器、架构图、token 分布等):<a href="../../../site/jev-visual.html">site/jev-visual.html</a></li>
+<li>与本仓库其它报告的关系:本仓库 01–11 号报告核验的是 <strong>Jev 判断模型本身</strong>(API 及开源复现生态);本篇是围绕"<strong>用 Jev 造 coding agent harness</strong>"的架构设计综述,视角互补——前者问"Jev 靠不靠谱",本篇问"Jev 该被问什么"。</li>
+</ul>
+<hr />
+<h2>0. 文档性质与可信度</h2>
+<ul>
+<li>副标题为 "A Synthesis for Study",自述是<strong>独立整理的学习综述</strong>,基于 "Diogo Almeida(TypeSafe 创始人)的设计笔记",明确声明与 TypeSafe / Anthropic / OpenAI / Microsoft 无关、未经认可。</li>
+<li>"Jev"、"TypeSafe"、"Diogo Almeida" 这些名字很可能是<strong>匿名化/占位处理</strong>过的真实来源(文中 Jev 被描述为"返回带概率的 typed choice / score / noul 决策的决策模型",实际可能是某个 LLM 微调或结构化决策组件)。</li>
+<li>成本数字是<strong>示例性的</strong>(按文中引用的 list price),token 占比表自述为"illustrative estimate"。</li>
+<li>引用了一处外部数据:Microsoft fastcontext 项目报告 GPT-5.4 轨迹中,读取+搜索占 tool-use 轮次的 56.2%、主 agent token 的 46.5%。这一数据未能在本地核实,引用时需谨慎。</li>
+</ul>
+<h2>1. 核心论点</h2>
+<ol>
+<li><strong>Coding agent 本质上很简单</strong>:一个 while 循环 + 模型 + 少量工具。创新空间不在循环本身,而在<strong>循环每一轮"喂给模型什么"</strong>。</li>
+<li><strong>Jev 不是写代码的模型</strong>,而是模型旁边的<strong>决策层</strong>:harness 把当前状态(目标、上下文、规则、可用动作、历史动作)交给 Jev,Jev 返回<strong>带概率的、有类型的答案</strong>(choice / score / noul),由确定性代码去验证、设阈值、分支——不需要解析自然语言。</li>
+<li>组织一切的<strong>思想实验</strong>:"如果 LLM 没有 KV cache,你会怎么设计 coding agent?"</li>
+<li>现在的 agent 之所以是 append-only 转写(transcript),完全是因为 KV cache 的经济学:复用缓存前缀便宜,改前面任何内容都会导致后面的全部重算。</li>
+<li>把 cache"想象掉",上下文就从"不断累积"变成"<strong>按 query 主动组装</strong>(assembled, not accumulated)"。</li>
+</ol>
+<h2>2. Jev 每轮要回答的六个问题(Table I)</h2>
+<table>
+<thead>
+<tr>
+<th>决策点</th>
+<th>问题</th>
+<th>类型化答案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context</td>
+<td>这个 chunk 对当前 query 应该多"可见"?</td>
+<td>choice: hide / short / long / full</td>
+</tr>
+<tr>
+<td>Cache</td>
+<td>复用缓存前缀还是重建?</td>
+<td>noul + probability</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>这个子任务能不能离开 frontier 模型?</td>
+<td>choice + 成本估计</td>
+</tr>
+<tr>
+<td>Tools</td>
+<td>哪个工具匹配当前意图?</td>
+<td>排序 choice, top-k</td>
+</tr>
+<tr>
+<td>Permissions</td>
+<td>这条命令该不该跑?</td>
+<td>allow / ask / deny</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>这个任务会碰哪些文件?(敏感度)</td>
+<td>sensitivity score</td>
+</tr>
+</tbody>
+</table>
+<h2>3. 六个"继承病"(Table II):现有 agent 不加思考就继承的设计</h2>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>根因</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 路由失败</td>
+<td>交回大模型时要重处理全部上下文</td>
+<td>混合路由比纯 frontier 还贵</td>
+</tr>
+<tr>
+<td>2. 工具挤占上下文</td>
+<td>schema 必须常驻 system message</td>
+<td>花在无关工具上的 token;选择变差</td>
+</tr>
+<tr>
+<td>3. 压缩盲目(compaction)</td>
+<td>假设所有未来轮次共享同一状态</td>
+<td>不知道问题就压缩,丢掉后面需要的</td>
+</tr>
+<tr>
+<td>4. 子代理很少触发</td>
+<td>决定传什么上下文、如何合并回来太困难</td>
+<td>几乎没有自动并行</td>
+</tr>
+<tr>
+<td>5. 重启即丢失</td>
+<td>有状态转写会随时间漂移/损坏</td>
+<td>好状态和坏状态一起扔掉</td>
+</tr>
+<tr>
+<td>6. "电池"之争</td>
+<td>每个内置能力都永久占用上下文</td>
+<td>被迫在易用与强大之间二选一</td>
+</tr>
+</tbody>
+</table>
+<p><strong>六个病可以用"拿掉 KV cache"这一个视角全部解释</strong>,并用一个动作全部治疗:状态显式化、类型化,由 Jev 按 query 决定 context / 路由 / 工具 / 权限。</p>
+<h2>4. 路由算术(Section II-A,Fig. 2)</h2>
+<p>记 X=上下文 token,Y=生成 token,Z=工作中额外读取的 token。价格:Opus $5/$25, Sonnet $3/$15(每百万 token)。</p>
+<ul>
+<li>路径 1(纯 Opus):<code>25Y + 5Z</code></li>
+<li>路径 2(Opus→Sonnet→Opus):Sonnet 载入上下文 <code>3X</code> + 生成 <code>15Y</code> + 读 <code>3Z</code>,Opus 回来重读变化 <code>5(Y+Z)</code>,合计 <code>3X + 20Y + 8Z</code></li>
+</ul>
+<p>代入典型会话形状 X=0.65, Y=0.12, Z=0.23:纯 Opus = <strong>4.15</strong>,路由路径 = <strong>6.19</strong> → 想省钱的路由反而贵了约 50%;纯 frontier 只花路由方案约 2/3 的钱。</p>
+<p><strong>结论</strong>:错不在路由,而在<strong>按 token 计价而不是按"上下文重建"计价</strong>。路由要成立必须:① 给便宜模型一个<strong>小型、专门构建</strong>的上下文而非整个会话;② 回程<strong>不强迫</strong> frontier 模型重读 helper 产出的一切(改为合并一个"带打分的 chunk")。</p>
+<h2>5. Token 到底花在哪(Section III)</h2>
+<p>输入视角的典型 CLI 会话(重复读取按次计数):</p>
+<table>
+<thead>
+<tr>
+<th>子任务</th>
+<th>~占比</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>读文件内容</td>
+<td>30–40%</td>
+<td>最大项;文件被当上下文反复读</td>
+</tr>
+<tr>
+<td>代码库搜索</td>
+<td>10–18%</td>
+<td>grep/glob/列表,噪声大</td>
+</tr>
+<tr>
+<td>命令输出</td>
+<td>10–20%</td>
+<td>失败时栈跟踪和日志爆炸</td>
+</tr>
+<tr>
+<td>system prompt/工具 schema/AGENTS.md</td>
+<td>5–12%</td>
+<td>每轮都要付的固定开销</td>
+</tr>
+<tr>
+<td>推理规划</td>
+<td>5–15%</td>
+<td>疑难调试更高</td>
+</tr>
+<tr>
+<td>写/改代码</td>
+<td><strong>4–10%</strong></td>
+<td>diff 和 str_replace 很紧凑</td>
+</tr>
+<tr>
+<td>给用户解释</td>
+<td>2–5%</td>
+<td>CLI agent 刻意简短</td>
+</tr>
+</tbody>
+</table>
+<p>要点:<strong>写代码——agent 存在的目的——是最小的支出项之一</strong>;读取+搜索+命令输出合计约 2/3。因此最大的效率杠杆不是更好的模型或 diff 格式,而是<strong>更聪明的检索</strong>。
+(截图核对 Fig. 3 条形图取中点值:读文件 35%、命令输出 15%、搜索 14%、系统提示 8%、推理 10%、编辑 7%、其余 3% + 用户解释。)</p>
+<h2>6. 基础层(Section IV)</h2>
+<ol>
+<li><strong>可编程权限</strong>:不是分类器式的 auto 模式,而是策略查询;关键在"深检"——执行前检查脚本<strong>内容</strong>而非命令名。
+   <code>policy "exec":
+     deny   if command touches ~/.ssh or .env*
+     deny   if script contents contain network egress and task.scope != "deploy"
+     ask    if command writes outside repo root
+     allow  if command in read_only_set
+     allow  if tests/ and exit code is expected</code></li>
+<li><strong>Harness 作为工具路由器</strong>:模型用自然语言描述意图,harness 用一串 typed Jev 调用选出唯一最佳(或 top 几)工具并构造参数;错误参数类型变成 validation error 而非静默失败。模型永远不需要在上下文里持有几百个 schema。</li>
+</ol>
+<h2>7. Meta-attention:上下文本身是决策对象(Section V)</h2>
+<ul>
+<li>对<strong>每个 chunk</strong>(工具输入/输出、内部推理、每轮对话)做 noul/打分 → 后续版本升级为<strong>可见度阶梯</strong>:hide / short summary / long summary / full(同一 chunk 按 query 变化:2400 行 grep 输出可以是"12 个相关命中",也可以对下一个问题完全不可见;但<strong>从不从 state 中删除</strong>)。</li>
+<li>这是 <strong>query-aware compression</strong>:compaction 的思想保留(压缩),最大缺陷消失(在知道问题<strong>之前</strong>压缩必然丢东西;知道问题<strong>之后</strong>压缩就知道留什么)。</li>
+<li>附录点子:harness 若能给 grep 输出标相关性热力图,就能按预算任意下采样(笔记还吐槽"这样也好看")。</li>
+</ul>
+<h2>8. 路由与子代理重访(Section VI)</h2>
+<ul>
+<li>有了"小型相关上下文"能力:便宜模型不再装载整个会话;结果作为<strong>打分过的 chunk</strong> 合并回来;一切成本/智能感知(cost-aware, intelligence-aware)。</li>
+<li><strong>子代理被解锁</strong>:笔记猜测今天子代理成本的大头是"决定传什么上下文";若组装上下文变得便宜且自动,子代理可以随便开;用户还能拿到一个"花钱买更快/更好 vs 省着跑"的旋钮。</li>
+<li><strong>极端并行</strong>:共享状态 + 锁;显式区分读/写使读任务永不争锁。</li>
+<li><strong>目标去重</strong>:派生子任务前先注册为 subgoal,与已有 subgoal 去重,不重复开跑。</li>
+</ul>
+<h2>9. 工具/技能分层披露(Section VII,Fig. 5)</h2>
+<p>三档:<strong>Tier 1 一行摘要</strong>(数百个工具常驻)→ <strong>Tier 2 选中才载入完整 schema</strong> → <strong>Tier 3 文档按一次性查询读</strong>;用完即从上下文清除,不污染。</p>
+<ul>
+<li>若内置能力"用到才花钱",<strong>电池之争自动消失</strong>:可以 ship 数百工具和数千文档页。</li>
+<li>"更好的电池":社区工具为什么常常没用?猜因模型不理解它们。第一方 harness 可内置"教模型怎么用每个工具"的提示(相当于每工具一个内置 skill),且干净上下文使工具逻辑不毒化会话。</li>
+</ul>
+<h2>10. 条件式指令(Section VIII)</h2>
+<ul>
+<li>AGENTS.md 今天全量加载;提案是<strong>按条件加载片段</strong>:碰 <code>*.tsx</code> → style-guide;进 <code>billing/</code> → <code>billing/GOTCHAS.md</code>(笔记建议每个子目录一个 footguns 文件);写散文 → 文风样本+禁例。</li>
+<li>与 skill 的区别:<strong>skill = "现在就做这个"</strong>;<strong>条件式指令 = "只要条件成立就一直记住这个"</strong>。后者需要 skill 缺少的关键属性——<strong>对 compaction 免疫</strong>(条件绑定,条件成立即重载;或被 pin 住不被摘要掉)。</li>
+<li><strong>结构化 skills</strong>:可携带行为变化而不只是指令,类似 hook 但更强;现有 hook 的缺陷是一旦加上就永久驻留——结构化 skill 随触发条件挂载/卸载。</li>
+<li><strong>递归语言模型</strong>(RLM, A. Zhang 2025):把 agent 状态尽量放进<strong>命名变量</strong>而非转写文本——状态是显式的,不是"上下文窗口里碰巧剩下的东西"。</li>
+</ul>
+<h2>11. 安全感知路由(Section IX)</h2>
+<ul>
+<li>路由现有两轴:难度、成本。<strong>新增第三轴:信任/敏感度</strong>。</li>
+<li>给每个子任务估计"会碰哪类文件",把策略挂到文件类型上,据此路由:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>会碰的文件</th>
+<th>策略</th>
+<th>可用模型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公开文档、开源依赖</td>
+<td>open</td>
+<td>任意,越便宜越好</td>
+</tr>
+<tr>
+<td>应用代码</td>
+<td>standard</td>
+<td>经过审查的供应商</td>
+</tr>
+<tr>
+<td>密钥、env、基础设施配置</td>
+<td>restricted</td>
+<td>仅第一方 frontier</td>
+</tr>
+<tr>
+<td>专有研究代码</td>
+<td>custom</td>
+<td>排除指定厂商</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>观点:<strong>难度和成本不是路由的全部理由</strong>——某些便宜 API 上的开源权重模型,数据隐私没保障;政策驱动后,这些偏好从"纪律"变成"配置"。</li>
+</ul>
+<h2>12. 后台处理(Section X,Fig. 7)</h2>
+<p>新兴模式:并行更新的 HTML 进度页("理解,而非生成,是新瓶颈")、用真实流量自动生成 eval(跑约一天再切换模型)、ELI5 讲解器等。</p>
+<p>共性:都是<strong>当前代码库状态的只读函数</strong>。若昂贵检索只做<strong>一次</strong>、被所有后台任务共享(而非各自重做),后台任务就能大量开;且只读任务永不争锁。这是 Jev 论点的兑现处:harness 必须精确知道上下文里有什么、每个操作是读还是写。鉴于检索占 token 预算的最大头,<strong>共享检索是单项最大的节省</strong>。</p>
+<h2>13. 电池候选清单(Table V)</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>角色</th>
+<th>原生化角度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>headroom</td>
+<td>上下文压缩器</td>
+<td>分类器检查压缩是否保住所需事实</td>
+</tr>
+<tr>
+<td>rtk</td>
+<td>工具输出压缩器</td>
+<td>第一方提示让模型真正会用它</td>
+</tr>
+<tr>
+<td>ast-grep</td>
+<td>结构化搜索</td>
+<td>手册载一次,生成 N 个 query,按相关性过滤</td>
+</tr>
+<tr>
+<td>ast-outline</td>
+<td>结构化大纲</td>
+<td>分层调用:先选子树再下钻</td>
+</tr>
+<tr>
+<td>fastcontext</td>
+<td>代码库探索子代理</td>
+<td>路由给它,或用结构替换其搜索</td>
+</tr>
+<tr>
+<td>fff</td>
+<td>路径/内容搜索</td>
+<td>内存索引、按频率排序,长会话比 ripgrep 快</td>
+</tr>
+</tbody>
+</table>
+<h2>14. 结论与总体评价</h2>
+<p><strong>一句话</strong>:把上下文窗口当作<strong>有目的地组装</strong>的东西,而不是<strong>意外累积</strong>的东西;状态显式化、类型化,每个高频决策点由 Jev 回答带概率的 typed answer。</p>
+<p><strong>我的评价(批判性视角)</strong>:
+- <strong>最强的一点</strong>:对 KV cache 经济学如何塑造 agent 架构的刻画非常锋利,六个症状是统一框架下的推论,不是六条零散吐槽。"按 token 计价的定价模型让直觉正确的路由变贵"这一算术演算值得每个做 multi-model 系统的人亲手重算。
+- <strong>相关性高的部分</strong>(即使不动架构也可借鉴):query-aware 压缩/可见度阶梯、按条件加载 AGENTS.md 片段 + compaction 免疫、安全敏感度作为路由轴、共享只读检索、目标去重。
+- <strong>存疑之处</strong>:
+  - "没有 KV cache"是反事实——prompt caching 真实存在且很便宜,所以"显式状态 + 每 query 重组装"的方案本身也有成本(组装/打分调用本身要花钱、要延迟),文中没有给出 Jev 决策层自身每轮的 token/延迟账,这是最大的未回答问题。
+  - 每轮对每个 chunk 打分意味着高频小模型调用,失败模式(打分噪声、阈值调参)未被讨论。
+  - 数字均为示例;"Jev/TypeSafe/Diogo Almeida" 疑为匿名化占位,fastcontext 的 56.2%/46.5% 数据未能核实。
+  - 文档本身是"独立编译的学习综述"而非一手材料,适合作为<strong>思路索引</strong>,行动前应回到原始设计笔记。</p>
+<h2>截图核对中补充的图表细节(逐页目视)</h2>
+<ul>
+<li><strong>Fig. 1(p.1)</strong>:架构图左列 "Explicit State" 包含 Tool calls / User turns / Diffs+files / Reasoning / AGENTS.md / Cached prefix 六类,落到 "Chunk store(addressable · typed)";右列 "Jev Decisions" 为 Chunk scoring / Cache reuse? / Route model / Pick tool / Permit command,标注 "typed answers · probabilities";底部 Jev Harness 下是 repo / files / test logs / git history;右侧 LLMs 盒子:Frontier LLM、Sub-agent models、Cheap/open models、Background reviewers,由 security policy 连接。</li>
+<li><strong>Fig. 2(p.4)</strong>:柱状图 Pure Opus 4.15 vs 路由 6.19,路由柱分解:load 1.95 / Sonnet gen 1.80 / Opus reload 1.75 / Sonnet reads 0.69。</li>
+<li><strong>Fig. 3(p.6)</strong>:条形图取中点值:读文件 35%、命令输出 15%、搜索 14%、系统提示 8%、推理 10%、编辑 7%、其余 3% + 用户解释。</li>
+<li><strong>Fig. 4(p.7)</strong>:可见度阶梯示例——grep 输出 2,400 行 → SHORT SUMMARY·12 hits;失败测试日志 → LONG SUMMARY·trace+cause;<code>auth/session.ts</code> → FULL·relevant to query;被取代的旧 plan → DON'T SHOW。中间是 "JEV, query-aware" 节点。</li>
+<li><strong>Fig. 5(p.8)</strong>:三层阶梯,右侧标注 "cost per turn rises",Tier 2→3 箭头标 "valuable to work with only a few tools"。</li>
+<li><strong>Fig. 6(p.9)</strong>:CURRENT TASK 分叉为三个条件(touched <code>*.tsx</code>? / inside <code>billing/</code>? / writing prose?)分别挂 style-guide.md / billing/GOTCHAS.md / voice samples + don'ts。</li>
+<li><strong>Fig. 7(p.10)</strong>:MAIN AGENT(writes)与 SHARED RETRIEVAL(relevant files, symbols, diffs, found once)并列,五个后台任务(cross-model review、background eval generation、ELI5 explainer · quizzes、live progress page、micro-world simulations)全部挂到共享检索上,标注 "read-only · never contend for locks"。</li>
+</ul>
+<h2>附:本仓库内文件清单</h2>
+<ul>
+<li><code>12-jev-engineering-pdf.md</code> — 本报告</li>
+<li><code>assets/12-jev-engineering-pdf/jev-engineering-for-coding-agents.pdf</code> — 原始 PDF(12 页)</li>
+<li><code>assets/12-jev-engineering-pdf/page-01..12.png</code> — 逐页截图(110 dpi),已全部目视核对,与文本提取一致</li>
+<li><code>site/jev-visual.html</code> — 交互式可视化解读站(单文件、零依赖)</li>
+</ul></section>
 </main>
 </body>
 </html>

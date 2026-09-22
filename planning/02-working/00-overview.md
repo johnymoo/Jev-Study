@@ -42,3 +42,7 @@
 
 - 在严格一致的前端表征下，对比极速通用大模型与专用判断模型（文章与 WindTunnel 均承认该消融缺失）。
 - 用本机可部署模型（如 GB10 上的 Qwen3.5 系列）复跑 SemIf 的 direct logits 管线，验证 84.5% 的可迁移性。
+
+## 相关报告(2026-09-22 增补)
+
+- **[12 · 《Jev Engineering for Coding Agents》PDF 解读](12-jev-engineering-pdf.md)**:12 页设计笔记综述(基于 TypeSafe 创始人 Diogo Almeida 的笔记)。视角与本仓库 01–11 号报告互补——那些报告核验"Jev 判断模型本身靠不靠谱",本篇讨论"**Jev 该被问什么**":coding agent harness 中每轮的六个决策点、KV cache 经济学如何塑造 agent 架构、路由算术(纯 Opus 4.15 vs 混合路由 6.19)、可见度阶梯与 query-aware 压缩等。交互式可视化见 [`site/jev-visual.html`](../../site/jev-visual.html)。

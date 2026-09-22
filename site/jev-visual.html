@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jev 工程解读 · Coding Agent 的下一步</title>
+<style>
+  :root{
+    --bg:#0d1117; --bg2:#161b22; --card:#1a2130; --line:#2a3245;
+    --tx:#e6edf3; --tx2:#9aa7b8; --acc:#4f9cf9; --acc2:#7ee0a3;
+    --warn:#f0b429; --bad:#f06a6a; --jev:#c792ea; --mono:"SF Mono",ui-monospace,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--tx);font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.75}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  section{padding:72px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:30px;margin-bottom:8px;letter-spacing:.5px}
+  .sub{color:var(--tx2);font-size:15px;margin-bottom:36px}
+  .tag{display:inline-block;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:99px;padding:2px 12px;margin-bottom:14px;letter-spacing:2px}
+
+  /* nav */
+  nav{position:fixed;top:0;left:0;right:0;z-index:9;background:rgba(13,17,23,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;gap:4px;overflow-x:auto;padding:10px 24px}
+  nav a{color:var(--tx2);text-decoration:none;font-size:13px;padding:4px 12px;border-radius:6px;white-space:nowrap}
+  nav a:hover{color:var(--tx);background:var(--card)}
+
+  /* hero */
+  header{padding:130px 0 80px;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(79,156,249,.18),transparent),var(--bg)}
+  header h1{font-size:52px;line-height:1.2;background:linear-gradient(90deg,#e6edf3,#7fb3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  header .lede{font-size:19px;color:var(--tx2);margin-top:18px;max-width:760px;margin-inline:auto}
+  .q{margin-top:34px;display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 30px;font-size:17px}
+  .q b{color:var(--jev)}
+
+  /* cards */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .2s,border-color .2s}
+  .card:hover{transform:translateY(-3px);border-color:var(--acc)}
+  .card h3{font-size:16px;margin-bottom:10px}
+  .card p{font-size:14px;color:var(--tx2)}
+  .num{font-size:26px;font-weight:700;color:var(--acc)}
+
+  /* six questions table */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{color:var(--tx2);text-align:left;font-weight:600;padding:10px 14px;border-bottom:2px solid var(--line);font-size:12px;letter-spacing:1px}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  td:first-child{color:var(--acc);font-weight:600;white-space:nowrap}
+  .type{font-family:var(--mono);font-size:12.5px;color:var(--acc2);background:rgba(126,224,163,.08);border-radius:6px;padding:2px 8px;display:inline-block}
+
+  /* symptoms */
+  .sym{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .sym .card{border-left:3px solid var(--bad)}
+  .sym .card h3::before{content:"❶❷❸❹❺❻";white-space:pre;color:var(--bad);margin-right:8px}
+  .sym .card:nth-child(1) h3::before{content:"❶"}.sym .card:nth-child(2) h3::before{content:"❷"}.sym .card:nth-child(3) h3::before{content:"❸"}
+  .sym .card:nth-child(4) h3::before{content:"❹"}.sym .card:nth-child(5) h3::before{content:"❺"}.sym .card:nth-child(6) h3::before{content:"❻"}
+  .fix{margin-top:10px;font-size:13px;color:var(--acc2)}
+  .fix::before{content:"→ 解法: ";color:var(--tx2)}
+
+  /* calculator */
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px}
+  .slider{margin:14px 0}
+  .slider label{display:flex;justify-content:space-between;font-size:14px;color:var(--tx2)}
+  .slider b{color:var(--tx);font-family:var(--mono)}
+  input[type=range]{width:100%;accent-color:var(--acc);margin-top:6px}
+  .bars{margin-top:26px}
+  .bar-row{margin:18px 0}
+  .bar-row .lbl{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+  .bar{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:12px;font-family:var(--mono);font-weight:700;color:#0d1117;transition:width .5s cubic-bezier(.2,.8,.2,1);min-width:60px}
+  .bar.pure{background:linear-gradient(90deg,#7ee0a3,#4f9cf9);color:#0d1117}
+  .bar.route{background:linear-gradient(90deg,#f0b429,#f06a6a)}
+  .verdict{margin-top:20px;padding:14px 18px;border-radius:10px;background:rgba(240,106,106,.1);border:1px solid rgba(240,106,106,.4);font-size:14px}
+  .verdict.good{background:rgba(126,224,163,.1);border-color:rgba(126,224,163,.4)}
+  .formula{font-family:var(--mono);font-size:13px;color:var(--tx2);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-top:18px;white-space:pre;overflow-x:auto}
+
+  /* token chart */
+  .tok-row{display:grid;grid-template-columns:170px 1fr 70px;align-items:center;gap:12px;margin:9px 0;font-size:14px}
+  .tok-row .name{color:var(--tx2)}
+  .tok-track{background:var(--bg2);border-radius:6px;height:26px;overflow:hidden}
+  .tok-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+  .tok-row .val{font-family:var(--mono);color:var(--tx);text-align:right}
+  .hl{outline:2px solid var(--warn);outline-offset:2px;border-radius:8px}
+
+  /* ladder */
+  .ladder{display:flex;flex-direction:column;gap:12px}
+  .lad{display:grid;grid-template-columns:200px 1fr 150px;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:14px}
+  .lad .src{font-family:var(--mono);font-size:12.5px;color:var(--tx2)}
+  .lad .vis{font-weight:700;text-align:center;border-radius:8px;padding:6px 10px;font-size:13px}
+  .v-hide{background:#2a3245;color:#8b96a6;text-decoration:line-through}
+  .v-short{background:rgba(79,156,249,.15);color:#7fb3ff;border:1px solid rgba(79,156,249,.4)}
+  .v-long{background:rgba(240,180,41,.12);color:var(--warn);border:1px solid rgba(240,180,41,.4)}
+  .v-full{background:rgba(126,224,163,.15);color:var(--acc2);border:1px solid rgba(126,224,163,.4)}
+
+  /* tiers */
+  .tier{border-radius:12px;padding:20px 24px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .t1{background:linear-gradient(90deg,rgba(79,156,249,.16),transparent);border:1px solid rgba(79,156,249,.45)}
+  .t2{background:linear-gradient(90deg,rgba(240,180,41,.14),transparent);border:1px solid rgba(240,180,41,.45);margin-left:36px}
+  .t3{background:linear-gradient(90deg,rgba(199,146,234,.14),transparent);border:1px solid rgba(199,146,234,.45);margin-left:72px}
+  .tier h3{font-size:15px}
+  .tier p{font-size:13px;color:var(--tx2)}
+
+  /* architecture svg */
+  .arch{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;overflow-x:auto}
+  .arch svg{min-width:760px;display:block;margin:0 auto}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--tx2);justify-content:center}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+  /* security table + batteries */
+  .policy-open{color:var(--acc2)}.policy-std{color:var(--acc)}.policy-res{color:var(--warn)}.policy-cus{color:var(--bad)}
+
+  .concl{background:linear-gradient(135deg,rgba(79,156,249,.1),rgba(199,146,234,.08));border:1px solid var(--line);border-radius:18px;padding:34px;font-size:16px}
+  .concl b{color:var(--acc2)}
+  footer{padding:40px 0 60px;color:var(--tx2);font-size:13px;text-align:center}
+  footer code{font-family:var(--mono);background:var(--bg2);padding:2px 8px;border-radius:6px}
+  @media(max-width:640px){
+    header h1{font-size:34px}
+    .lad{grid-template-columns:1fr;gap:8px}
+    .tok-row{grid-template-columns:110px 1fr 60px}
+  }
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a href="#idea">核心思想</a><a href="#arch">架构</a><a href="#q6">Jev 六问</a><a href="#sym">六大继承病</a>
+  <a href="#calc">路由算术</a><a href="#tok">Token 去哪了</a><a href="#ladder">可见度阶梯</a>
+  <a href="#tier">工具分层</a><a href="#cond">条件指令</a><a href="#sec">安全路由</a><a href="#bg">后台处理</a>
+  <a href="#bat">电池清单</a><a href="#verdict">批判性评价</a>
+</div></nav>
+
+<header>
+  <div class="wrap">
+    <div class="tag">PDF 解读 · 12 页 · 2026 年 9 月</div>
+    <h1>Jev 工程:为 Coding Agent<br>重新设计上下文</h1>
+    <p class="lede">《Jev Engineering for Coding Agents》(基于 TypeSafe 创始人 Diogo Almeida 的设计笔记)主张:agent 的杠杆不在循环本身,而在<b style="color:#e6edf3">循环每一轮喂给模型什么</b>。</p>
+    <div class="q">思想实验:<b>「如果 LLM 没有 KV cache,你会怎么设计 coding agent?」</b></div>
+  </div>
+</header>
+
+<section id="idea"><div class="wrap">
+  <h2>一、核心思想</h2>
+  <p class="sub">为什么"拿掉 KV cache"这一个假设,能推翻今天 agent 的整个形态</p>
+  <div class="grid g2">
+    <div class="card"><h3>今天的 agent:append-only 转写</h3><p>复用缓存前缀很便宜;改前面任何内容都会让后面全部重算。这一个经济学事实,让 agent 变成"只追加的对话转写"——上下文靠<b>累积</b>,不靠设计。</p></div>
+    <div class="card"><h3>没有 cache 的世界:按需组装</h3><p>上下文从"不断累积"变成"<b>主动组装</b>(assembled, not accumulated)"。每个 chunk 可寻址、有类型,每轮重新决定谁出场。</p></div>
+    <div class="card"><h3>Jev 不是写代码的模型</h3><p>它是模型旁边的<b>决策层</b>:输入当前状态(目标、上下文、规则、可用动作、历史动作)+ 预定义问题,输出<b>带概率的类型化答案</b>:choice / score / noul。确定性代码负责验证、阈值、分支——不解析自然语言。</p></div>
+    <div class="card"><h3>杠杆在哪</h3><p>这类小决策每个会话要问<b>上千次</b>:下一轮看哪些 chunk?子任务要不要离开 frontier 模型?哪个工具匹配意图?这条命令能不能跑?——笔记认为全部杠杆都在这里。</p></div>
+  </div>
+</div></section>
+
+<section id="arch"><div class="wrap">
+  <h2>二、Jev Harness 架构(重绘 Fig. 1)</h2>
+  <p class="sub">显式状态 → Jev 决策 → 上下文组装 → 运行时,右侧四种模型由安全策略把关</p>
+  <div class="arch">
+  <svg viewBox="0 0 780 430" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC',sans-serif">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5a6a85"/></marker>
+    </defs>
+    <!-- user -->
+    <circle cx="40" cy="215" r="12" fill="none" stroke="#9aa7b8" stroke-width="2"/>
+    <path d="M18 252 q22 -22 44 0" fill="none" stroke="#9aa7b8" stroke-width="2"/>
+    <text x="40" y="275" fill="#9aa7b8" font-size="12" text-anchor="middle">用户</text>
+    <line x1="56" y1="215" x2="92" y2="215" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <!-- explicit state -->
+    <rect x="96" y="20" width="250" height="300" rx="14" fill="#1a2130" stroke="#2a3245"/>
+    <text x="221" y="44" fill="#e6edf3" font-size="13" font-weight="700" text-anchor="middle">显式状态 Explicit State</text>
+    <g font-size="11.5" fill="#c9d4e3">
+      <rect x="114" y="60" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="164" y="79" text-anchor="middle">工具调用</text>
+      <rect x="228" y="60" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="278" y="79" text-anchor="middle">推理过程</text>
+      <rect x="114" y="98" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="164" y="117" text-anchor="middle">用户轮次</text>
+      <rect x="228" y="98" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="278" y="117" text-anchor="middle">AGENTS.md</text>
+      <rect x="114" y="136" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="164" y="155" text-anchor="middle">Diff + 文件</text>
+      <rect x="228" y="136" width="100" height="30" rx="8" fill="#222b3d" stroke="#39435c"/><text x="278" y="155" text-anchor="middle">缓存前缀</text>
+    </g>
+    <rect x="130" y="186" width="182" height="42" rx="10" fill="#2b2440" stroke="#c792ea"/>
+    <text x="221" y="204" fill="#c792ea" font-size="12" font-weight="700" text-anchor="middle">Chunk Store</text>
+    <text x="221" y="220" fill="#9aa7b8" font-size="10" text-anchor="middle">可寻址 · 有类型</text>
+    <!-- jev decisions -->
+    <rect x="400" y="20" width="250" height="300" rx="14" fill="#1a2130" stroke="#2a3245"/>
+    <text x="525" y="44" fill="#c792ea" font-size="13" font-weight="700" text-anchor="middle">Jev 决策 Jev Decisions</text>
+    <g font-size="11.5" fill="#c9d4e3">
+      <rect x="418" y="60" width="100" height="32" rx="8" fill="#2b2440" stroke="#c792ea" stroke-opacity=".5"/><text x="468" y="80" text-anchor="middle">Chunk 打分</text>
+      <rect x="532" y="60" width="100" height="32" rx="8" fill="#2b2440" stroke="#c792ea" stroke-opacity=".5"/><text x="582" y="80" text-anchor="middle">复用缓存?</text>
+      <rect x="418" y="100" width="100" height="32" rx="8" fill="#2b2440" stroke="#c792ea" stroke-opacity=".5"/><text x="468" y="120" text-anchor="middle">路由模型</text>
+      <rect x="532" y="100" width="100" height="32" rx="8" fill="#2b2440" stroke="#c792ea" stroke-opacity=".5"/><text x="582" y="120" text-anchor="middle">选工具</text>
+      <rect x="475" y="142" width="100" height="32" rx="8" fill="#2b2440" stroke="#c792ea" stroke-opacity=".5"/><text x="525" y="162" text-anchor="middle">放行命令?</text>
+    </g>
+    <text x="525" y="192" fill="#9aa7b8" font-size="10" text-anchor="middle">类型化答案 · 附概率</text>
+    <!-- assembly + router -->
+    <rect x="330" y="230" width="140" height="40" rx="10" fill="#222b3d" stroke="#4f9cf9"/>
+    <text x="400" y="255" fill="#7fb3ff" font-size="12" text-anchor="middle">上下文组装</text>
+    <rect x="490" y="230" width="120" height="40" rx="10" fill="#222b3d" stroke="#7ee0a3"/>
+    <text x="550" y="255" fill="#7ee0a3" font-size="12" text-anchor="middle">路由器(安全策略)</text>
+    <!-- runtime -->
+    <rect x="330" y="292" width="280" height="44" rx="10" fill="#39435c" stroke="#7fb3ff"/>
+    <text x="470" y="319" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">运行时 Runtime</text>
+    <!-- tools -->
+    <text x="470" y="356" fill="#9aa7b8" font-size="10.5" text-anchor="middle">数百个工具 · 摘要在前,按需取 schema</text>
+    <g font-size="11">
+      <rect x="120" y="366" width="70" height="28" rx="7" fill="#222b3d" stroke="#39435c" fill-opacity="0"/><rect x="120" y="366" width="70" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="155" y="384" fill="#c9d4e3" text-anchor="middle">grep</text>
+      <rect x="200" y="366" width="80" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="240" y="384" fill="#c9d4e3" text-anchor="middle">ast-grep</text>
+      <rect x="290" y="366" width="60" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="320" y="384" fill="#c9d4e3" text-anchor="middle">tests</text>
+      <rect x="360" y="366" width="55" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="387" y="384" fill="#c9d4e3" text-anchor="middle">git</text>
+      <rect x="425" y="366" width="85" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="467" y="384" fill="#c9d4e3" text-anchor="middle">headroom</text>
+      <rect x="520" y="366" width="55" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="547" y="384" fill="#c9d4e3" text-anchor="middle">rtk</text>
+      <rect x="585" y="366" width="55" height="28" rx="7" fill="#222b3d" stroke="#39435c"/><text x="612" y="384" fill="#c9d4e3" text-anchor="middle">fff</text>
+    </g>
+    <!-- llms -->
+    <rect x="675" y="150" width="95" height="200" rx="14" fill="#1a2130" stroke="#2a3245"/>
+    <g font-size="10.5" fill="#c9d4e3">
+      <rect x="686" y="166" width="73" height="34" rx="8" fill="#222b3d" stroke="#4f9cf9"/><text x="722" y="180" text-anchor="middle">Frontier</text><text x="722" y="193" text-anchor="middle">LLM</text>
+      <rect x="686" y="208" width="73" height="34" rx="8" fill="#222b3d" stroke="#39435c"/><text x="722" y="222" text-anchor="middle">子代理</text><text x="722" y="235" text-anchor="middle">模型</text>
+      <rect x="686" y="250" width="73" height="34" rx="8" fill="#222b3d" stroke="#39435c"/><text x="722" y="264" text-anchor="middle">廉价/开源</text><text x="722" y="277" text-anchor="middle">模型</text>
+      <rect x="686" y="292" width="73" height="34" rx="8" fill="#222b3d" stroke="#39435c"/><text x="722" y="306" text-anchor="middle">后台</text><text x="722" y="319" text-anchor="middle">审查者</text>
+    </g>
+    <line x1="610" y1="250" x2="675" y2="250" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <line x1="346" y1="215" x2="400" y2="248" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <line x1="525" y1="215" x2="550" y2="248" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <line x1="400" y1="270" x2="420" y2="292" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <line x1="550" y1="270" x2="520" y2="292" stroke="#5a6a85" marker-end="url(#arr)"/>
+    <line x1="200" y1="320" x2="150" y2="366" stroke="#5a6a85" marker-end="url(#arr)"/>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#2b2440;border:1px solid #c792ea"></span>Jev 决策(紫色)</span>
+    <span><span class="dot" style="background:#222b3d;border:1px solid #39435c"></span>显式状态 / 工具</span>
+    <span><span class="dot" style="background:#39435c;border:1px solid #7fb3ff"></span>运行时</span>
+  </div>
+  </div>
+</div></section>
+
+<section id="q6"><div class="wrap">
+  <h2>三、Jev 每轮要回答的六个问题(Table I)</h2>
+  <p class="sub">每个原生特性,底下都是一个高频决策点上的 Jev 提问</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <tr><th>决策点</th><th>向 Jev 提问</th><th>类型化答案</th></tr>
+      <tr><td>上下文</td><td>这个 chunk 对当前 query 应该多"可见"?</td><td><span class="type">choice: hide / short / long / full</span></td></tr>
+      <tr><td>缓存</td><td>复用缓存前缀,还是重建?</td><td><span class="type">noul + probability</span></td></tr>
+      <tr><td>路由</td><td>这个子任务能否离开 frontier 模型?</td><td><span class="type">choice + 成本估计</span></td></tr>
+      <tr><td>工具</td><td>哪个工具匹配当前意图?</td><td><span class="type">ranked choice, top-k</span></td></tr>
+      <tr><td>权限</td><td>这条命令该不该跑?</td><td><span class="type">allow / ask / deny</span></td></tr>
+      <tr><td>安全</td><td>这个任务会碰哪些类型的文件?</td><td><span class="type">sensitivity score</span></td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="sym"><div class="wrap">
+  <h2>四、六大继承病(Table II)</h2>
+  <p class="sub">现有 agent 不加审视就继承的设计——全部可以由"显式状态 + Jev"一个动作治愈</p>
+  <div class="sym">
+    <div class="card"><h3>路由失败</h3><p>把执行交给便宜模型,再交回大模型时,<b>整个上下文被重处理</b>。</p><div class="fix">按"上下文重建"计价;给便宜模型小而专的上下文</div></div>
+    <div class="card"><h3>工具挤占上下文</h3><p>schema 必须常驻 system message,不管本轮是否相关。</p><div class="fix">摘要在前,schema 按需载入(见"工具分层")</div></div>
+    <div class="card"><h3>压缩是盲目的</h3><p>compaction 假设所有未来轮次共享同一状态,<b>在知道问题之前</b>压缩,必然丢掉后面需要的东西。</p><div class="fix">query-aware 压缩 / 可见度阶梯</div></div>
+    <div class="card"><h3>子代理很少触发</h3><p>决定"传什么上下文进去、如何合并回来"太贵太易错,模型干脆不开。</p><div class="fix">自动组装小上下文;结果作为打分 chunk 合并</div></div>
+    <div class="card"><h3>重启即丢失</h3><p>转写漂移后重启,好状态和坏状态<b>一起扔掉</b>。</p><div class="fix">可寻址状态:干净重启,只重载仍相关的 chunk</div></div>
+    <div class="card"><h3>"电池"之争</h3><p>每个内置能力都<b>永久</b>占用上下文,易用与强大被迫二选一。</p><div class="fix">内置能力"用到才花钱",争论自动消失</div></div>
+  </div>
+</div></section>
+
+<section id="calc"><div class="wrap">
+  <h2>五、路由算术计算器(互动)</h2>
+  <p class="sub">拖动滑块,亲手验证"直觉正确的路由为什么反而更贵"。价格:Opus $5/$25,Sonnet $3/$15(每百万 token)</p>
+  <div class="calc">
+    <div class="slider"><label> X · 上下文 token <b id="xv">0.65</b></label><input type="range" id="x" min="5" max="100" value="65"></div>
+    <div class="slider"><label> Y · 生成 token <b id="yv">0.12</b></label><input type="range" id="y" min="2" max="50" value="12"></div>
+    <div class="slider"><label> Z · 工作中额外读取的 token <b id="zv">0.23</b></label><input type="range" id="z" min="2" max="60" value="23"></div>
+    <div class="bars">
+      <div class="bar-row"><div class="lbl"><span>路径 1:纯 Opus &nbsp;<code style="color:#7ee0a3">25Y + 5Z</code></span><span id="p1v">4.15</span></div><div class="bar pure" id="p1" style="width:60%">4.15</div></div>
+      <div class="bar-row"><div class="lbl"><span>路径 2:Opus → Sonnet → Opus &nbsp;<code style="color:#f0b429">3X + 20Y + 8Z</code></span><span id="p2v">6.19</span></div><div class="bar route" id="p2" style="width:90%">6.19</div></div>
+    </div>
+    <div class="verdict" id="verdict">❌ 混合路由比纯 frontier 贵 <b id="diff">49%</b>。错不在路由,而在<b>按 token 计价而非按上下文重建计价</b>——下行的装载成本 + 回程的重处理成本,吃掉了全部 token 折扣。</div>
+    <div class="formula">路径 2 分解:
+  Sonnet 载入上下文   3X
+  Sonnet 生成        15Y
+  Sonnet 读取         3Z
+  Opus 回程重读变化   5(Y+Z)
+  ─────────────────────────
+  合计              3X + 20Y + 8Z
+
+路由成立的前提:
+  ① harness 能给便宜模型一个"小型、专门构建"的上下文(而非整个转写)
+  ② 回程不强迫 frontier 模型重读 helper 产出的一切(改为合并一个"打分过的 chunk")</div>
+  </div>
+</div></section>
+
+<section id="tok"><div class="wrap">
+  <h2>六、Token 到底花在哪(重绘 Fig. 3 / Table III)</h2>
+  <p class="sub">典型 CLI 会话的输入视角;高亮项:<b style="color:var(--warn)">写代码——agent 存在的目的——只占 4–10%</b></p>
+  <div class="card">
+    <div class="tok-row"><span class="name">读文件内容</span><div class="tok-track"><div class="tok-fill" style="width:35%;background:#4f9cf9" data-w="35"></div></div><span class="val">30–40%</span></div>
+    <div class="tok-row"><span class="name">命令输出</span><div class="tok-track"><div class="tok-fill" style="width:15%;background:#5f8fe0" data-w="15"></div></div><span class="val">10–20%</span></div>
+    <div class="tok-row"><span class="name">代码库搜索</span><div class="tok-track"><div class="tok-fill" style="width:14%;background:#5f8fe0" data-w="14"></div></div><span class="val">10–18%</span></div>
+    <div class="tok-row"><span class="name">推理与规划</span><div class="tok-track"><div class="tok-fill" style="width:10%;background:#7a7fe0" data-w="10"></div></div><span class="val">5–15%</span></div>
+    <div class="tok-row"><span class="name">系统提示 / schema / AGENTS.md</span><div class="tok-track"><div class="tok-fill" style="width:8%;background:#8a7ad8" data-w="8"></div></div><span class="val">5–12%</span></div>
+    <div class="tok-row hl"><span class="name" style="color:var(--tx)">写 / 改代码</span><div class="tok-track"><div class="tok-fill" style="width:7%;background:#f0b429" data-w="7"></div></div><span class="val">4–10%</span></div>
+    <div class="tok-row"><span class="name">给用户解释</span><div class="tok-track"><div class="tok-fill" style="width:3.5%;background:#a68ad0" data-w="3.5"></div></div><span class="val">2–5%</span></div>
+  </div>
+  <p style="margin-top:18px;color:var(--tx2);font-size:14px">读取 + 搜索 + 命令输出合计约 <b style="color:var(--acc)">2/3</b>。笔记引 Microsoft fastcontext:GPT-5.4 轨迹中读取+搜索占 tool-use 轮次的 56.2%、主 agent token 的 46.5%。<b style="color:var(--acc2)">最大的效率杠杆不是更好的模型,而是更聪明的检索。</b></p>
+</div></section>
+
+<section id="ladder"><div class="wrap">
+  <h2>七、可见度阶梯(重绘 Fig. 4)</h2>
+  <p class="sub">query-aware 压缩:compaction 的思想保留,最大缺陷消失。同一 chunk 按当前 query 决定形态,<b>但从不从状态中删除</b></p>
+  <div class="ladder">
+    <div class="lad"><span class="src">grep 输出,2,400 行</span><span>对"找调用点"这个问题:12 个相关命中就够了</span><span class="vis v-short">SHORT · 12 hits</span></div>
+    <div class="lad"><span class="src">测试日志(失败)</span><span>需要栈跟踪 + 根因,给长摘要</span><span class="vis v-long">LONG · trace+cause</span></div>
+    <div class="lad"><span class="src">file: auth/session.ts</span><span>正在改这个文件,与 query 直接相关</span><span class="vis v-full">FULL · 全文</span></div>
+    <div class="lad"><span class="src">旧计划(已被取代)</span><span>对当前问题毫无价值——但保留在状态里</span><span class="vis v-hide">DON'T SHOW</span></div>
+  </div>
+  <p style="margin-top:18px;color:var(--tx2);font-size:14px">笔记的彩蛋:如果 harness 能给 grep 输出标注<b style="color:var(--jev)">相关性热力图</b>,就能按预算任意下采样——"而且这样也好看"。</p>
+</div></section>
+
+<section id="tier"><div class="wrap">
+  <h2>八、工具三层披露(重绘 Fig. 5)</h2>
+  <p class="sub">模型看见一张"便宜的地图",只为它选中的少数工具付费,用完即从上下文清除</p>
+  <div>
+    <div class="tier t1"><div><h3>TIER 1 · 摘要</h3><p>每个能力一行 · 相关时载入 · 数百个工具</p></div><span class="num" style="color:var(--acc);font-size:20px">低成本常驻</span></div>
+    <div class="tier t2"><div><h3>TIER 2 · 按需 Schema</h3><p>只为选中的少数工具载入完整参数定义</p></div><span class="num" style="color:var(--warn);font-size:20px">↓ 花费上升</span></div>
+    <div class="tier t3"><div><h3>TIER 3 · 文档</h3><p>仅供一次性查询时手动阅读</p></div><span class="num" style="color:var(--jev);font-size:20px">最贵</span></div>
+  </div>
+  <p style="margin-top:18px;color:var(--tx2);font-size:14px">若内置能力"用到才花钱",<b style="color:var(--acc2)">电池之争自动消失</b>:可以 ship 数百工具、数千文档页。模型用自然语言描述意图,harness 用一串 typed Jev 调用选工具并构造参数——错参数类型变成 validation error,而非静默失败。</p>
+</div></section>
+
+<section id="cond"><div class="wrap">
+  <h2>九、条件式指令(重绘 Fig. 6)</h2>
+  <p class="sub">AGENTS.md 不再全量加载;指令附着在<b>条件</b>上而不是会话上,并对 compaction 免疫</p>
+  <div class="grid g3">
+    <div class="card"><h3>碰 <code style="color:var(--acc)">*.tsx</code> ?</h3><p>→ 载入 style-guide.md<br>(前端风格规范)</p></div>
+    <div class="card"><h3>进入 <code style="color:var(--acc)">billing/</code> ?</h3><p>→ 载入 billing/GOTCHAS.md<br>(每个子目录一个 footguns 文件)</p></div>
+    <div class="card"><h3>在写散文 ?</h3><p>→ 载入文风样本 + 禁例清单</p></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h3>与 Skill 的关键区别</h3><p>Skill 是"<b>现在就做这个</b>";条件式指令是"<b>只要条件成立就持续记住</b>"。后者需要 skill 缺少的属性:<b style="color:var(--acc2)">对 compaction 免疫</b>——条件成立即重载(或被 pin 住不被摘要掉)。结构化 skills 可进一步携带行为变化(比 hook 更强:hook 一旦加上就永久驻留,结构化 skill 随条件挂载/卸载)。相关方向:递归语言模型(RLM, A. Zhang 2025)——把状态放进命名变量,而非"窗口里碰巧剩下的文本"。</p></div>
+</div></section>
+
+<section id="sec"><div class="wrap">
+  <h2>十、安全感知路由(Table IV)</h2>
+  <p class="sub">路由现有两轴(难度、成本),笔记加第三轴:<b style="color:var(--bad)">信任 / 敏感度</b>——按"会碰哪类文件"路由,偏好从纪律变成配置</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <tr><th>会碰的文件</th><th>策略</th><th>可用模型</th></tr>
+      <tr><td>公开文档、开源依赖</td><td><span class="policy-open">open</span></td><td>任意,越便宜越好</td></tr>
+      <tr><td>应用代码</td><td><span class="policy-std">standard</span></td><td>经过审查的供应商</td></tr>
+      <tr><td>密钥、env、基础设施配置</td><td><span class="policy-res">restricted</span></td><td>仅第一方 frontier</td></tr>
+      <tr><td>专有研究代码</td><td><span class="policy-cus">custom</span></td><td>排除指定厂商</td></tr>
+    </table>
+  </div>
+  <p style="margin-top:16px;color:var(--tx2);font-size:14px">深检权限示例:执行前检查<b>脚本内容</b>而非命令名——</p>
+  <div class="formula">policy "exec":
+  deny   if command touches ~/.ssh or .env*
+  deny   if script contents contain network egress
+             and task.scope != "deploy"
+  ask    if command writes outside repo root
+  allow  if command in read_only_set
+  allow  if tests/ and exit code is expected</div>
+</div></section>
+
+<section id="bg"><div class="wrap">
+  <h2>十一、后台处理:共享一次检索(重绘 Fig. 7)</h2>
+  <p class="sub">昂贵的"找出什么相关"只做一次,所有只读后台任务共享——鉴于检索占 token 最大头,这是<b>单项最大的节省</b></p>
+  <div class="grid g2">
+    <div class="card" style="border-left:3px solid var(--acc2)"><h3>主代理(写)</h3><p>正常写代码、改文件;与共享检索层交互。</p></div>
+    <div class="card" style="border-left:3px solid var(--acc)"><h3>共享检索层</h3><p>一次找出相关文件、符号、diff;<b>read-only,永不争锁</b>。</p></div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><h3>🔍 跨模型审查</h3><p>让一家厂商的 agent 审查另一家的产出</p></div>
+    <div class="card"><h3>📊 自动 eval 生成</h3><p>镜像真实流量生成评测,跑约一天再切模型</p></div>
+    <div class="card"><h3>🧒 ELI5 讲解器</h3><p>用大图 + 极少文字解释系统</p></div>
+    <div class="card"><h3>📱 实时进度页</h3><p>截图 + 笔记,长跑期间手机可查</p></div>
+    <div class="card"><h3>🌍 微世界模拟</h3><p>小环境里验证行为</p></div>
+    <div class="card"><h3>⚡ 极端并行</h3><p>共享状态 + 锁;显式区分读/写,读任务永不争锁</p></div>
+  </div>
+</div></section>
+
+<section id="bat"><div class="wrap">
+  <h2>十二、电池候选清单(Table V)</h2>
+  <p class="sub">笔记收尾列出的可原生化开源项目</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <tr><th>项目</th><th>角色</th><th>原生化角度</th></tr>
+      <tr><td>headroom</td><td>上下文压缩器</td><td>分类器检查压缩是否保住了所需事实</td></tr>
+      <tr><td>rtk</td><td>工具输出压缩器</td><td>第一方提示,让模型真正会用它</td></tr>
+      <tr><td>ast-grep</td><td>结构化搜索</td><td>手册载一次,生成 N 个 query,按相关性过滤</td></tr>
+      <tr><td>ast-outline</td><td>结构化大纲</td><td>分层调用:先选子树再下钻</td></tr>
+      <tr><td>fastcontext</td><td>代码库探索子代理</td><td>路由给它,或用结构替换其搜索</td></tr>
+      <tr><td>fff</td><td>路径/内容搜索</td><td>内存索引、按频率排序,长会话比 ripgrep 快</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="verdict"><div class="wrap">
+  <h2>十三、我的批判性评价</h2>
+  <p class="sub">解读者的立场,而非原文内容</p>
+  <div class="grid g2">
+    <div class="card" style="border-left:3px solid var(--acc2)"><h3>👍 最强的点</h3><p>对 KV cache 经济学如何塑造 agent 架构的刻画非常锋利:六大症状是统一框架下的推论,不是六条零散吐槽。"按 token 计价的定价让直觉正确的路由变贵"——每个做 multi-model 系统的人都该亲手重算一遍。</p></div>
+    <div class="card" style="border-left:3px solid var(--acc2)"><h3>🛠️ 不动架构也能借鉴</h3><p>query-aware 压缩 / 可见度阶梯;按条件加载 AGENTS.md 片段 + compaction 免疫;安全敏感度作为路由轴;后台任务共享检索;派生前目标去重。</p></div>
+    <div class="card" style="border-left:3px solid var(--bad)"><h3>⚠️ 未回答的关键账</h3><p>"没有 KV cache"是反事实——prompt caching 真实存在且便宜。"每轮对每个 chunk 打分"的方案自身要花多少 token / 多少延迟?Jev 决策层自己的成本从未被记账,这是全文最大的空白。</p></div>
+    <div class="card" style="border-left:3px solid var(--bad)"><h3>🔍 可信度注意</h3><p>数字均为示例;"Jev / TypeSafe / Diogo Almeida" 疑似匿名化占位名;fastcontext 的 56.2% / 46.5% 未核实;文档自称"独立编译的学习综述",是<b>思路索引</b>,行动前应回到原始设计笔记。</p></div>
+  </div>
+  <div class="concl" style="margin-top:24px">一句话:把上下文窗口当作<b>"有目的地组装"</b>的东西,而不是"意外累积"的东西。状态显式化、类型化,每个高频决策点由 Jev 回答带概率的类型化答案——<b>这不需要更好的模型,只需要停止让上下文"堆积如山"。</b></div>
+</div></section>
+
+<footer>
+  <div class="wrap">解读自 <a href="https://drive.google.com/file/d/17h982xvsL3E7b80iGmOCfKp9qTOW9ohv/view" style="color:var(--acc)">《Jev Engineering for Coding Agents》</a>(12 页,2026-09)· 本页为个人解读可视化,非原文翻译<br>
+  本地文件:<code>gdrive_pdf.pdf</code> · <code>gdrive_pdf_研究笔记.md</code> · 逐页截图 <code>pdf_pages/</code></div>
+</footer>
+
+<script>
+  // routing calculator
+  const x=document.getElementById('x'),y=document.getElementById('y'),z=document.getElementById('z');
+  function calc(){
+    const X=x.value/100,Y=y.value/100,Z=z.value/100;
+    document.getElementById('xv').textContent=X.toFixed(2);
+    document.getElementById('yv').textContent=Y.toFixed(2);
+    document.getElementById('zv').textContent=Z.toFixed(2);
+    const p1=25*Y+5*Z, p2=3*X+20*Y+8*Z;
+    const mx=Math.max(p1,p2);
+    const b1=document.getElementById('p1'),b2=document.getElementById('p2');
+    b1.style.width=Math.max(8,(p1/mx*88))+'%'; b1.textContent=p1.toFixed(2);
+    b2.style.width=Math.max(8,(p2/mx*88))+'%'; b2.textContent=p2.toFixed(2);
+    document.getElementById('p1v').textContent=p1.toFixed(2);
+    document.getElementById('p2v').textContent=p2.toFixed(2);
+    const v=document.getElementById('verdict'), d=document.getElementById('diff');
+    if(p2>p1){const pct=((p2-p1)/p1*100).toFixed(0);
+      v.className='verdict'; v.innerHTML='❌ 混合路由比纯 frontier 贵 <b>'+pct+'%</b>。错不在路由,而在<b>按 token 计价而非按上下文重建计价</b>——下行的装载成本 + 回程的重处理成本,吃掉了全部 token 折扣。';
+    } else {const pct=((p1-p2)/p1*100).toFixed(0);
+      v.className='verdict good'; v.innerHTML='✅ 此时路由省 '+pct+'%。会话越短(X 小)、写入越多(Y 大)、读取越少(Z 小),路由越划算——这就是"harness 必须先造出小上下文"的原因。';
+    }
+  }
+  ['x','y','z'].forEach(id=>document.getElementById(id).addEventListener('input',calc)); calc();
+
+  // token bars animate in
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){const f=e.target.querySelector('.tok-fill');if(f){f.style.width=f.dataset.w+'%';}io.unobserve(e.target);}
+  }),{threshold:.3});
+  document.querySelectorAll('.tok-row').forEach(r=>{const f=r.querySelector('.tok-fill');f.style.width='0%';io.observe(r);});
+</script>
+</body>
+</html>

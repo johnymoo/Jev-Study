@@ -58,9 +58,11 @@ FILES = [
     ("08-windtunnel.md", "08 · WindTunnel", ""),
     ("09-jev-browser.md", "09 · jev-browser", ""),
     ("10-kev-nimble-training.md", "10 · Kev & Nimble 训练方法 ★", "★"),
+    ("12-jev-engineering-pdf.md", "12 · Jev Engineering PDF 解读", "★"),
 ]
 
 nav, sections = [], []
+nav.append('<a href="jev-visual.html">🎛 交互式可视化 · 路由计算器</a>')
 for fname, title, badge in FILES:
     path = REPORTS / fname
     body = to_html(path.read_text(encoding="utf-8")) if path.exists() else "<p>缺失</p>"
